@@ -48,15 +48,15 @@ const Home = () => {
     },
     {
       name: "Raj Patel",
-      location: "Sydney",
+      location: "Melbourne",
       text: "The flavours are incredible. I don't feel like I'm on a diet at all. Down 12kg and counting!",
       rating: 5
     },
     {
-      name: "Anita Kumar",
-      location: "Brisbane",
+      name: "Abdulla Khan",
+      location: "Melbourne",
       text: "SpiceFit changed my relationship with food. Healthy Indian meals that actually taste amazing.",
-      rating: 5
+      rating: 4.5
     }
   ];
 
@@ -99,7 +99,7 @@ const Home = () => {
                 </span>
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Personalised weight-loss meals inspired by traditional Indian flavours — 
+                Personalised weight-loss meals inspired by traditional Indian flavours —
                 fresh, calorie-smart, and delivered to your door.
               </p>
               <Link
@@ -109,7 +109,7 @@ const Home = () => {
                 Start Your Plan
               </Link>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -117,13 +117,13 @@ const Home = () => {
               className="relative"
             >
               <img
-                src="https://images.pexels.com/photos/6544379/pexels-photo-6544379.jpeg?auto=compress&cs=tinysrgb&h=600"
+                src="/homepage.png"
                 alt="Healthy Indian meal bowl"
                 className="rounded-2xl shadow-2xl w-full"
               />
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-xl p-4 shadow-lg">
-                <div className="text-2xl font-bold text-orange-500">320</div>
-                <div className="text-sm text-gray-600">calories per meal</div>
+              <div className="absolute -bottom-6 -left-6 bg-white/60 backdrop-blur-md rounded-xl p-4 shadow-lg">
+                <div className="text-2xl font-bold text-orange-500">1400</div>
+                <div className="text-sm text-gray-600">Kilojoule per meal</div>
               </div>
             </motion.div>
           </div>
@@ -138,7 +138,7 @@ const Home = () => {
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="text-center p-8 rounded-2xl bg-gradient-to-br from-orange-50 to-red-50 hover:shadow-lg transition-shadow"
               >
@@ -267,10 +267,40 @@ const Home = () => {
                 className="bg-white rounded-2xl p-8 shadow-lg"
               >
                 <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <span key={i} className="text-yellow-400 text-xl">⭐</span>
+                  {Array.from({ length: Math.floor(testimonial.rating) }).map((_, i) => (
+                    <svg
+                      key={i}
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      className="w-6 h-6 text-yellow-400"
+                    >
+                      <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                    </svg>
                   ))}
+
+                  {testimonial.rating % 1 !== 0 && (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      className="w-6 h-6 text-yellow-400"
+                    >
+                      <defs>
+                        <linearGradient id="half-grad">
+                          <stop offset="50%" stopColor="currentColor" />
+                          <stop offset="50%" stopColor="lightgray" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        fill="url(#half-grad)"
+                        d="M12 17.27L18.18 21 16.54 13.97 
+           22 9.24l-7.19-.61L12 2 9.19 8.63 
+           2 9.24l5.46 4.73L5.82 21z"
+                      />
+                    </svg>
+                  )}
                 </div>
+
                 <p className="text-gray-600 mb-6 italic">"{testimonial.text}"</p>
                 <div>
                   <div className="font-bold text-gray-900">{testimonial.name}</div>

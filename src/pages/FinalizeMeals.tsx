@@ -5,7 +5,7 @@ import { meals } from "../data/meals";
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const categories = ["all", "breakfast", "lunch", "dinner"];
-const filters = ["veg", "high-protein", "low-carb", "popular"];
+const filters = ["high-protein", "low-carb", "popular"];
 
 const zigzagKJ = (base: number) => {
   const variation = [1.1, 0.95, 1.05, 1.0, 0.9, 1.08, 0.92];
@@ -14,12 +14,9 @@ const zigzagKJ = (base: number) => {
 
 export default function FinalizeMeals() {
   const [activeDay, setActiveDay] = useState(0);
-  const [weeklyMeals, setWeeklyMeals] = useState<
-    Record<number, Record<number, number>>
-  >({});
+  const [weeklyMeals, setWeeklyMeals] = useState<Record<number, Record<number, number>>>({});
   const [targets, setTargets] = useState<number[]>([]);
   const [dietPref, setDietPref] = useState("No preference");
-  const [activeTab, setActiveTab] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -43,13 +40,10 @@ export default function FinalizeMeals() {
     if (!meal) return;
 
     const currentMeals = weeklyMeals[activeDay] || {};
-    const currentTotal = Object.entries(currentMeals).reduce(
-      (sum, [id, count]) => {
-        const m = meals.find((meal) => meal.id === Number(id));
-        return m ? sum + m.kj * count : sum;
-      },
-      0
-    );
+    const currentTotal = Object.entries(currentMeals).reduce((sum, [id, count]) => {
+      const m = meals.find((meal) => meal.id === Number(id));
+      return m ? sum + m.kj * count : sum;
+    }, 0);
 
     if (currentTotal + meal.kj > targets[activeDay]) return;
 
@@ -78,13 +72,7 @@ export default function FinalizeMeals() {
   const filterByDiet = (meal: any) => {
     if (dietPref === "Vegetarian") return meal.tags?.includes("veg");
     if (dietPref === "Vegan") return meal.tags?.includes("vegan");
-    return true;
-  };
-
-  const filterByTab = (meal: any) => {
-    if (activeTab === "top-10") return meal.popular;
-    if (activeTab === "new") return meal.tags?.includes("new");
-    if (activeTab === "limited") return meal.tags?.includes("limited");
+    if (dietPref === "Non-Vegetarian") return meal.tags?.includes("non-veg");
     return true;
   };
 
@@ -124,9 +112,7 @@ export default function FinalizeMeals() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="max-w-6xl mx-auto py-12 px-4">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Choose Your Meals
-        </h1>
+        <h1 className="text-3xl font-bold text-center mb-8">Choose Your Meals</h1>
         <p className="text-center text-gray-600 mb-6">
           Customize your meals for each day of the week
         </p>
@@ -140,64 +126,75 @@ export default function FinalizeMeals() {
                 setActiveDay(i);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                i === activeDay
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${i === activeDay
                   ? "bg-red-500 text-white shadow-lg"
                   : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               {label}
             </button>
           ))}
         </div>
 
-        {/* Category & Filter Controls */}
+        {/* Diet & Filters */}
         <div className="flex flex-wrap gap-4 mb-8">
+          {/* Dietary Preference */}
           <div className="flex flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-600 py-2">
-              Categories:
-            </span>
+            <span className="text-sm font-medium text-gray-600 py-2">Diet:</span>
+            {["No preference", "Vegetarian", "Vegan", "Non-Vegetarian"].map((pref) => (
+              <button
+                key={pref}
+                onClick={() => setDietPref(pref)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${dietPref === pref
+                    ? "bg-red-100 text-red-700 border border-red-300"
+                    : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                  }`}
+              >
+                {pref}
+              </button>
+            ))}
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm font-medium text-gray-600 py-2">Categories:</span>
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  selectedCategory === category
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === category
                     ? "bg-orange-100 text-orange-700 border border-orange-300"
                     : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-                }`}
+                  }`}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </button>
             ))}
           </div>
+
+          {/* Tag Filters */}
           <div className="flex flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-600 py-2">
-              Filters:
-            </span>
+            <span className="text-sm font-medium text-gray-600 py-2">Filters:</span>
             {filters.map((filter) => (
               <button
                 key={filter}
                 onClick={() => toggleFilter(filter)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  selectedFilters.includes(filter)
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedFilters.includes(filter)
                     ? "bg-green-100 text-green-700 border border-green-300"
                     : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-                }`}
+                  }`}
               >
-                {filter === "veg"
-                  ? "Vegetarian"
-                  : filter === "high-protein"
+                {filter === "high-protein"
                   ? "High Protein"
                   : filter === "low-carb"
-                  ? "Low Carb"
-                  : "Popular"}
+                    ? "Low Carb"
+                    : "Popular"}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress */}
         <div className="bg-red-900 text-white rounded-xl px-6 py-4 mb-6">
           <p className="font-semibold text-lg">{days[activeDay]} Target</p>
           <p className="text-xl font-bold">
@@ -213,17 +210,16 @@ export default function FinalizeMeals() {
           </div>
         </div>
 
-        {/* Meals Grid */}
-        {["breakfast", "lunch", "dinner", "snack"].map((cat) => (
+        {/* Meals Section */}
+        {["breakfast", "lunch", "dinner", "snacks", "desserts"].map((cat) => (
           <div key={cat} className="mb-12">
             <h2 className="text-2xl font-bold text-gray-800 capitalize mb-6">
               {cat}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {meals
-                .filter((meal) => filterByCategory(meal, cat))
+                .filter((meal) => meal.category === cat)
                 .filter(filterByDiet)
-                .filter(filterByTab)
                 .filter(filterByTags)
                 .map((meal) => (
                   <div
@@ -263,10 +259,10 @@ export default function FinalizeMeals() {
                             {tag === "veg"
                               ? "🌱 Veg"
                               : tag === "high-protein"
-                              ? "💪 High Protein"
-                              : tag === "low-carb"
-                              ? "🥗 Low Carb"
-                              : tag}
+                                ? "💪 High Protein"
+                                : tag === "low-carb"
+                                  ? "🥗 Low Carb"
+                                  : tag}
                           </span>
                         ))}
                       </div>
@@ -295,37 +291,6 @@ export default function FinalizeMeals() {
         ))}
 
         {/* Footer */}
-        {/* <div className="flex justify-between items-center mt-12">
-          <button
-            onClick={() => {
-              setActiveDay((activeDay + 1) % 7);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-6 py-3 rounded-lg font-semibold"
-          >
-            Next Day →
-          </button>
-          <button
-            disabled={!allDaysSelected}
-            onClick={() => {
-              localStorage.setItem(
-                "selectedWeeklyMeals",
-                JSON.stringify(weeklyMeals)
-              );
-              localStorage.setItem("zigzagPlan", JSON.stringify(targets));
-              navigate("/plan");
-            }}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              allDaysSelected
-                ? "bg-red-500 hover:bg-red-600 text-white"
-                : "bg-gray-200 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            Continue to Pricing
-          </button>
-        </div> */}
-
-        {/* Footer */}
         <div className="flex justify-between items-center mt-12">
           <button
             onClick={() => {
@@ -340,21 +305,14 @@ export default function FinalizeMeals() {
           <button
             disabled={!allDaysSelected}
             onClick={() => {
-              // ✅ Save weekly meals and zigzag plan to localStorage
-              localStorage.setItem(
-                "selectedWeeklyMeals",
-                JSON.stringify(weeklyMeals)
-              );
+              localStorage.setItem("selectedWeeklyMeals", JSON.stringify(weeklyMeals));
               localStorage.setItem("zigzagPlan", JSON.stringify(targets));
-
-              // Navigate to plan selection page
               navigate("/plan");
             }}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              allDaysSelected
+            className={`px-6 py-3 rounded-lg font-semibold transition ${allDaysSelected
                 ? "bg-red-500 hover:bg-red-600 text-white"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"
-            }`}
+              }`}
           >
             Continue to Pricing
           </button>
