@@ -1,8 +1,13 @@
 // src/pages/PersonalizedPlan.tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../utils/supabaseClient";
+import { useAuth } from "../hooks/useAuth";
 
 export default function PersonalizedPlanPage() {
+
+  const { user } = useAuth();
+
   const [userData, setUserData] = useState<null | {
     gender: string;
     age: number;
@@ -18,22 +23,26 @@ export default function PersonalizedPlanPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const saved = localStorage.getItem("userDetails");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setUserData({
-        gender: parsed.gender,
-        age: Number(parsed.age),
-        weight: Number(parsed.weight),
-        height: Number(parsed.height),
-        weightLossGoal: Number(parsed.weightLossGoal ?? parsed.goal),
-        timeframeWeeks: Number(parsed.timeframeWeeks ?? parsed.timeframe),
-        activityLevel: parsed.activityLevel,
-        dietaryPreference: parsed.dietaryPreference,
-      });
-      setTimeframe(Number(parsed.timeframeWeeks ?? parsed.timeframe) || 24);
+  const fetchData = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("user_details")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (error || !data) {
+      console.error("No user details found:", error);
+      return;
     }
-  }, []);
+
+    setUserData(data);
+    setTimeframe(data.timeframe_weeks);
+  };
+
+  fetchData();
+}, [user]);
 
   if (!userData) {
     return (
@@ -51,32 +60,35 @@ export default function PersonalizedPlanPage() {
   }
 
   const calculateCalories = () => {
-    const { gender, weight, height, age, activityLevel, weightLossGoal } = userData;
+  if (!userData) return { calories: 0, kilojoules: 0, weeklyLoss: 0 };
 
-    let bmr =
-      gender === "male"
-        ? 10 * weight + 6.25 * height - 5 * age + 5
-        : 10 * weight + 6.25 * height - 5 * age - 161;
+  const { gender, weightLossGoal, height, age, activityLevel } = userData;
 
-    const activityMap: Record<string, number> = {
-      low: 1.2,
-      moderate: 1.55,
-      high: 1.75,
-    };
+  const bmr =
+    gender === "male"
+      ? 10 * userData.weight + 6.25 * height - 5 * age + 5
+      : 10 * userData.weight + 6.25 * height - 5 * age - 161;
 
-    const tdee = bmr * (activityMap[activityLevel] || 1.2);
-    const weeklyLossKg = weightLossGoal / timeframe;
-    const calorieDeficit = Math.min(weeklyLossKg * 1100, 1000);
-    const targetCals = Math.max(tdee - calorieDeficit, gender === "female" ? 1200 : 1500);
-
-    return {
-      calories: Math.round(targetCals),
-      kilojoules: Math.round(targetCals * 4.184),
-      weeklyLoss: Math.round(weeklyLossKg * 1000),
-    };
+  const activityMap: Record<string, number> = {
+    low: 1.2,
+    moderate: 1.55,
+    high: 1.75,
   };
 
-  const { calories, kilojoules, weeklyLoss } = calculateCalories();
+  const tdee = bmr * (activityMap[activityLevel] || 1.2);
+  const weeklyLossKg = weightLossGoal / timeframe;
+  const calorieDeficit = Math.min(weeklyLossKg * 1100, 1000);
+  const targetCals = Math.max(tdee - calorieDeficit, gender === "female" ? 1200 : 1500);
+
+  return {
+    calories: Math.round(targetCals),
+    kilojoules: Math.round(targetCals * 4.184),
+    weeklyLoss: Math.round(weeklyLossKg * 1000),
+  };
+};
+
+const { calories, kilojoules, weeklyLoss } = calculateCalories();
+
 
   const calorieTiers = [
     {
@@ -96,16 +108,31 @@ export default function PersonalizedPlanPage() {
     },
   ];
 
-  const handleConfirmPlan = () => {
-    const planData = {
-      calories,
-      kilojoules,
-      weeklyLoss,
-      timeframe,
-    };
-    localStorage.setItem("confirmedPlan", JSON.stringify(planData));
-    navigate("/finalize-meals");
-  };
+
+
+const handleConfirmPlan = async () => {
+  if (!user) return;
+
+  const { error } = await supabase
+    .from("user_details")
+    .update({
+      timeframe_weeks: timeframe,
+      calculated_daily_calories: kilojoules,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error updating user plan:", error);
+    alert("Failed to save your plan.");
+    return;
+  }
+
+  navigate("/finalize-meals");
+};
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-16 px-4">

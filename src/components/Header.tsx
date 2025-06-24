@@ -10,10 +10,11 @@ const Header = () => {
     { name: "Meals", path: "/meals" },
     { name: "Plans", path: "/plan" },
     { name: "Contact", path: "/contact" },
+    { name: "Profile", path: "/profile" },
   ];
 
   return (
-    <motion.header 
+    <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className="bg-white shadow-sm border-b border-orange-100 sticky top-0 z-50"
@@ -22,23 +23,22 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">SF</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-900">SpiceFit</span>
+            <img
+              src="/logo.png"
+              alt="SpiceBox Logo"
+              className="h-[8rem] w-auto"
+            />
           </Link>
-
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-sm font-medium transition-colors hover:text-orange-600 ${
-                  location.pathname === item.path
-                    ? "text-orange-600 border-b-2 border-orange-600"
-                    : "text-gray-700"
-                }`}
+                className={`text-sm font-medium transition-colors hover:text-orange-600 ${location.pathname === item.path
+                  ? "text-orange-600 border-b-2 border-orange-600"
+                  : "text-gray-700"
+                  }`}
               >
                 {item.name}
               </Link>

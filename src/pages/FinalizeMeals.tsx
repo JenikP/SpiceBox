@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { meals } from "../data/meals";
+import { supabase } from "../utils/supabaseClient";
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const categories = ["all", "breakfast", "lunch", "dinner"];
+const categories = ["all", "breakfast", "lunch", "dinner", "snacks", "desserts"];
 const filters = ["high-protein", "low-carb", "popular"];
 
 const zigzagKJ = (base: number) => {
@@ -76,11 +77,6 @@ export default function FinalizeMeals() {
     return true;
   };
 
-  const filterByCategory = (meal: any, cat: string) => {
-    if (selectedCategory === "all") return meal.category === cat;
-    return meal.category === cat && selectedCategory === cat;
-  };
-
   const filterByTags = (meal: any) => {
     if (selectedFilters.length === 0) return true;
     return selectedFilters.every((filter) =>
@@ -94,6 +90,41 @@ export default function FinalizeMeals() {
         ? prev.filter((f) => f !== filter)
         : [...prev, filter]
     );
+  };
+
+  const saveMealsToSupabase = async () => {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      alert("Please log in again.");
+      return;
+    }
+
+    await supabase.from("weekly_meal_plan").delete().eq("user_id", user.id);
+
+    const inserts = Object.entries(weeklyMeals).flatMap(([dayIndex, meals]) =>
+      Object.entries(meals).map(([mealId, quantity]) => ({
+        user_id: user.id,
+        day_index: Number(dayIndex),
+        meal_id: Number(mealId),
+        quantity,
+      }))
+    );
+
+    const { error: insertError } = await supabase
+      .from("weekly_meal_plan")
+      .insert(inserts);
+
+    if (insertError) {
+      console.error("Error saving meals:", insertError);
+      alert("Failed to save your meals.");
+      return;
+    }
+
+    navigate("/plan");
   };
 
   const currentMeals = weeklyMeals[activeDay] || {};
@@ -117,26 +148,7 @@ export default function FinalizeMeals() {
           Customize your meals for each day of the week
         </p>
 
-        {/* Day Tabs */}
-        <div className="flex justify-center gap-2 mb-6 flex-wrap">
-          {days.map((label, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setActiveDay(i);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${i === activeDay
-                  ? "bg-red-500 text-white shadow-lg"
-                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Diet & Filters */}
+        {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-8">
           {/* Dietary Preference */}
           <div className="flex flex-wrap gap-2">
@@ -145,10 +157,11 @@ export default function FinalizeMeals() {
               <button
                 key={pref}
                 onClick={() => setDietPref(pref)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${dietPref === pref
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  dietPref === pref
                     ? "bg-red-100 text-red-700 border border-red-300"
                     : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-                  }`}
+                }`}
               >
                 {pref}
               </button>
@@ -162,10 +175,11 @@ export default function FinalizeMeals() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === category
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === category
                     ? "bg-orange-100 text-orange-700 border border-orange-300"
                     : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-                  }`}
+                }`}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </button>
@@ -179,19 +193,37 @@ export default function FinalizeMeals() {
               <button
                 key={filter}
                 onClick={() => toggleFilter(filter)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedFilters.includes(filter)
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedFilters.includes(filter)
                     ? "bg-green-100 text-green-700 border border-green-300"
                     : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-                  }`}
+                }`}
               >
                 {filter === "high-protein"
                   ? "High Protein"
                   : filter === "low-carb"
-                    ? "Low Carb"
-                    : "Popular"}
+                  ? "Low Carb"
+                  : "Popular"}
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Day Tabs */}
+        <div className="flex justify-center gap-2 mb-6 flex-wrap">
+          {days.map((label, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveDay(i)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                i === activeDay
+                  ? "bg-red-500 text-white shadow-lg"
+                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Progress */}
@@ -210,85 +242,81 @@ export default function FinalizeMeals() {
           </div>
         </div>
 
-        {/* Meals Section */}
-        {["breakfast", "lunch", "dinner", "snacks", "desserts"].map((cat) => (
-          <div key={cat} className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-800 capitalize mb-6">
-              {cat}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {meals
-                .filter((meal) => meal.category === cat)
-                .filter(filterByDiet)
-                .filter(filterByTags)
-                .map((meal) => (
-                  <div
-                    key={meal.id}
-                    className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group"
-                  >
-                    <div className="relative">
-                      <img
-                        src={meal.image}
-                        alt={meal.name}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {meal.popular && (
-                        <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                          Popular
+        {/* Meals Display */}
+        {categories
+          .filter((cat) => selectedCategory === "all" || cat === selectedCategory)
+          .map((cat) => (
+            <div key={cat} className="mb-12">
+              <h2 className="text-2xl font-bold text-gray-800 capitalize mb-6">
+                {cat}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {meals
+                  .filter((meal) => meal.category === cat)
+                  .filter(filterByDiet)
+                  .filter(filterByTags)
+                  .map((meal) => (
+                    <div
+                      key={meal.id}
+                      className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                    >
+                      <div className="relative">
+                        <img
+                          src={meal.image}
+                          alt={meal.name}
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {meal.popular && (
+                          <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                            Popular
+                          </div>
+                        )}
+                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold text-gray-800">
+                          {meal.kj} kJ
                         </div>
-                      )}
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold text-gray-800">
-                        {meal.kj} kJ
                       </div>
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        {meal.name}
-                      </h3>
-                      <div className="flex justify-between text-sm text-gray-600 mb-4">
-                        <span>Protein: {meal.protein}g</span>
-                        <span>Carbs: {meal.carbs}g</span>
-                        <span>Fat: {meal.fat}g</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {(meal.tags || []).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {meal.name}
+                        </h3>
+                        <div className="flex justify-between text-sm text-gray-600 mb-4">
+                          <span>Protein: {meal.protein}g</span>
+                          <span>Carbs: {meal.carbs}g</span>
+                          <span>Fat: {meal.fat}g</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {(meal.tags || []).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <button
+                            onClick={() => removeMeal(meal.id)}
+                            className="px-3 py-1 bg-gray-200 rounded-lg text-lg font-bold"
                           >
-                            {tag === "veg"
-                              ? "🌱 Veg"
-                              : tag === "high-protein"
-                                ? "💪 High Protein"
-                                : tag === "low-carb"
-                                  ? "🥗 Low Carb"
-                                  : tag}
+                            −
+                          </button>
+                          <span className="text-xl font-semibold">
+                            {currentMeals[meal.id] || 0}
                           </span>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <button
-                          onClick={() => removeMeal(meal.id)}
-                          className="px-3 py-1 bg-gray-200 rounded-lg text-lg font-bold"
-                        >
-                          −
-                        </button>
-                        <span className="text-xl font-semibold">
-                          {currentMeals[meal.id] || 0}
-                        </span>
-                        <button
-                          onClick={() => addMeal(meal.id)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-lg text-lg font-bold"
-                        >
-                          +
-                        </button>
+                          <button
+                            onClick={() => addMeal(meal.id)}
+                            className="px-3 py-1 bg-red-500 text-white rounded-lg text-lg font-bold"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
         {/* Footer */}
         <div className="flex justify-between items-center mt-12">
@@ -304,15 +332,12 @@ export default function FinalizeMeals() {
 
           <button
             disabled={!allDaysSelected}
-            onClick={() => {
-              localStorage.setItem("selectedWeeklyMeals", JSON.stringify(weeklyMeals));
-              localStorage.setItem("zigzagPlan", JSON.stringify(targets));
-              navigate("/plan");
-            }}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${allDaysSelected
+            onClick={saveMealsToSupabase}
+            className={`px-6 py-3 rounded-lg font-semibold transition ${
+              allDaysSelected
                 ? "bg-red-500 hover:bg-red-600 text-white"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
+            }`}
           >
             Continue to Pricing
           </button>

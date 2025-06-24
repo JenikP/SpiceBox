@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../utils/supabaseClient";
 
 export default function EnterDetailsPage() {
   const navigate = useNavigate();
@@ -18,55 +19,97 @@ export default function EnterDetailsPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    const ageMap: Record<string, number> = {
-      "18-25": 22,
-      "26-39": 32,
-      "40-49": 45,
-      "50+": 55
-    };
-
-    const ageValue = ageMap[formData.age];
-    const height = parseFloat(formData.height);
-    const weight = parseFloat(formData.weight);
-    const goal = parseFloat(formData.goal);
-    const weeks = parseInt(formData.timeframe);
-
-    const gender = formData.gender;
-    let bmr;
-
-    if (gender === "male") {
-      bmr = 88.362 + 13.397 * weight + 4.799 * height - 5.677 * ageValue;
-    } else {
-      bmr = 447.593 + 9.247 * weight + 3.098 * height - 4.330 * ageValue;
-    }
-
-    let activityMultiplier = 1.2;
-    switch (formData.activityLevel) {
-      case "moderate": activityMultiplier = 1.55; break;
-      case "high": activityMultiplier = 1.725; break;
-      default: activityMultiplier = 1.375; break;
-    }
-
-    const tdee = bmr * activityMultiplier;
-    const deficit = Math.min(goal / weeks * 7700, 1000);
-    const calories = Math.max(Math.round(tdee - deficit), gender === "female" ? 1200 : 1500);
-
-    const dataToSave = {
-      ...formData,
-      age: ageValue,
-      weight,
-      height,
-      weightLossGoal: goal,
-      timeframeWeeks: weeks,
-      calculatedDailyCalories: calories
-    };
-
-    localStorage.setItem("userDetails", JSON.stringify(dataToSave));
-    navigate("/personalized-plan");
+  const ageMap: Record<string, number> = {
+    "18-25": 22,
+    "26-39": 32,
+    "40-49": 45,
+    "50+": 55,
   };
+
+  const ageValue = ageMap[formData.age];
+  const height = parseFloat(formData.height);
+  const weight = parseFloat(formData.weight);
+  const goal = parseFloat(formData.goal);
+  const weeks = parseInt(formData.timeframe);
+  const gender = formData.gender;
+
+  // ✅ Calculate calories (in kilojoules)
+  const bmr =
+    gender === "male"
+      ? 88.362 + 13.397 * weight + 4.799 * height - 5.677 * ageValue
+      : 447.593 + 9.247 * weight + 3.098 * height - 4.330 * ageValue;
+
+  const multiplier =
+    formData.activityLevel === "high"
+      ? 1.725
+      : formData.activityLevel === "moderate"
+      ? 1.55
+      : 1.375;
+
+  const tdee = bmr * multiplier;
+  const deficit = Math.min((goal / weeks) * 7700, 1000);
+  const calories = Math.max(Math.round(tdee - deficit), gender === "female" ? 1200 : 1500);
+  const kilojoules = Math.round(calories * 4.184); // ✅ Convert to kJ
+
+  // ✅ Get current user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    alert("User not authenticated. Please log in again.");
+    return;
+  }
+
+  // ✅ Check if user_details already exists
+  const { data: existingData, error: checkError } = await supabase
+    .from("user_details")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  const payload = {
+    user_id: user.id,
+    gender,
+    age: ageValue,
+    height,
+    activity_level: formData.activityLevel,
+    weight_loss_goal: goal,
+    timeframe_weeks: weeks,
+    dietary_preference: formData.dietaryPreference,
+    calculated_daily_calories: kilojoules,
+    updated_at: new Date().toISOString(),
+  };
+
+  let error;
+
+  if (existingData) {
+    // 🔁 Update existing
+    const { error: updateError } = await supabase
+      .from("user_details")
+      .update(payload)
+      .eq("user_id", user.id);
+    error = updateError;
+  } else {
+    // 🆕 Insert new
+    const { error: insertError } = await supabase.from("user_details").insert(payload);
+    error = insertError;
+  }
+
+  if (error) {
+    console.error("Error saving to Supabase:", error);
+    alert("Failed to save your details. Please try again.");
+    return;
+  }
+
+  navigate("/personalized-plan");
+};
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-20 px-6">
