@@ -43,6 +43,7 @@ export type Database = {
         Row: {
           activity_level: string
           age: number
+          weight: number
           calculated_daily_calories: number
           created_at: string
           dietary_preference: string | null
@@ -57,6 +58,7 @@ export type Database = {
         Insert: {
           activity_level: string
           age: number
+          weight: number
           calculated_daily_calories: number
           created_at?: string
           dietary_preference?: string | null
@@ -71,6 +73,7 @@ export type Database = {
         Update: {
           activity_level?: string
           age?: number
+          weight?: number
           calculated_daily_calories?: number
           created_at?: string
           dietary_preference?: string | null

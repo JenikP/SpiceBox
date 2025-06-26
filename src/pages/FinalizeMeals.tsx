@@ -5,7 +5,14 @@ import { meals } from "../data/meals";
 import { supabase } from "../utils/supabaseClient";
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const categories = ["all", "breakfast", "lunch", "dinner", "snacks", "desserts"];
+const categories = [
+  "all",
+  "breakfast",
+  "lunch",
+  "dinner",
+  "snacks",
+  "desserts",
+];
 const filters = ["high-protein", "low-carb", "popular"];
 
 const zigzagKJ = (base: number) => {
@@ -15,7 +22,9 @@ const zigzagKJ = (base: number) => {
 
 export default function FinalizeMeals() {
   const [activeDay, setActiveDay] = useState(0);
-  const [weeklyMeals, setWeeklyMeals] = useState<Record<number, Record<number, number>>>({});
+  const [weeklyMeals, setWeeklyMeals] = useState<
+    Record<number, Record<number, number>>
+  >({});
   const [targets, setTargets] = useState<number[]>([]);
   const [dietPref, setDietPref] = useState("No preference");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -23,17 +32,44 @@ export default function FinalizeMeals() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userData = localStorage.getItem("userDetails");
-    if (userData) {
-      const parsed = JSON.parse(userData);
-      setDietPref(parsed.dietaryPreference || "No preference");
-    }
-    const confirmed = localStorage.getItem("confirmedPlan");
-    if (confirmed) {
-      const parsed = JSON.parse(confirmed);
-      const daily = Number(parsed.kilojoules);
-      setTargets(zigzagKJ(daily));
-    }
+    const fetchUserDetails = async () => {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        alert("Please log in again.");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("user_details")
+        .select("dietary_preference, calculated_daily_calories")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching user details:", error);
+        alert("Failed to load plan details.");
+        return;
+      }
+
+      if (!data) {
+        alert("No personalized plan found. Please complete your plan first.");
+        return navigate("/personalized-plan");
+      }
+
+      setDietPref(
+        data.dietary_preference?.charAt(0).toUpperCase() +
+          data.dietary_preference?.slice(1) || "No preference"
+      );
+
+      const kj = Number(data.calculated_daily_calories);
+      setTargets(zigzagKJ(kj));
+    };
+
+    fetchUserDetails();
   }, []);
 
   const addMeal = (mealId: number) => {
@@ -41,10 +77,13 @@ export default function FinalizeMeals() {
     if (!meal) return;
 
     const currentMeals = weeklyMeals[activeDay] || {};
-    const currentTotal = Object.entries(currentMeals).reduce((sum, [id, count]) => {
-      const m = meals.find((meal) => meal.id === Number(id));
-      return m ? sum + m.kj * count : sum;
-    }, 0);
+    const currentTotal = Object.entries(currentMeals).reduce(
+      (sum, [id, count]) => {
+        const m = meals.find((meal) => meal.id === Number(id));
+        return m ? sum + m.kj * count : sum;
+      },
+      0
+    );
 
     if (currentTotal + meal.kj > targets[activeDay]) return;
 
@@ -106,22 +145,36 @@ export default function FinalizeMeals() {
     await supabase.from("weekly_meal_plan").delete().eq("user_id", user.id);
 
     const inserts = Object.entries(weeklyMeals).flatMap(([dayIndex, meals]) =>
-      Object.entries(meals).map(([mealId, quantity]) => ({
-        user_id: user.id,
-        day_index: Number(dayIndex),
-        meal_id: Number(mealId),
-        quantity,
-      }))
+      Object.entries(meals)
+        .filter(([, quantity]) => quantity > 0) // ✅ Only insert if quantity > 0
+        .map(([mealId, quantity]) => ({
+          user_id: user.id,
+          day_index: Number(dayIndex),
+          meal_id: Number(mealId),
+          quantity,
+        }))
     );
 
-    const { error: insertError } = await supabase
+    if (inserts.length === 0) {
+      alert("Please select at least one meal per day before saving.");
+      return;
+    }
+
+    const { error: insertError, data } = await supabase
       .from("weekly_meal_plan")
       .insert(inserts);
 
     if (insertError) {
-      console.error("Error saving meals:", insertError);
+      console.error(
+        "❌ Error saving meals:",
+        insertError.message,
+        insertError.details
+      );
+      console.log("Inserts attempted:", inserts);
       alert("Failed to save your meals.");
       return;
+    } else {
+      console.log("✅ Meals saved successfully!", data);
     }
 
     navigate("/plan");
@@ -143,7 +196,9 @@ export default function FinalizeMeals() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="max-w-6xl mx-auto py-12 px-4">
-        <h1 className="text-3xl font-bold text-center mb-8">Choose Your Meals</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">
+          Choose Your Meals
+        </h1>
         <p className="text-center text-gray-600 mb-6">
           Customize your meals for each day of the week
         </p>
@@ -152,25 +207,31 @@ export default function FinalizeMeals() {
         <div className="flex flex-wrap gap-4 mb-8">
           {/* Dietary Preference */}
           <div className="flex flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-600 py-2">Diet:</span>
-            {["No preference", "Vegetarian", "Vegan", "Non-Vegetarian"].map((pref) => (
-              <button
-                key={pref}
-                onClick={() => setDietPref(pref)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  dietPref === pref
-                    ? "bg-red-100 text-red-700 border border-red-300"
-                    : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-                }`}
-              >
-                {pref}
-              </button>
-            ))}
+            <span className="text-sm font-medium text-gray-600 py-2">
+              Diet:
+            </span>
+            {["No preference", "Vegetarian", "Vegan", "Non-Vegetarian"].map(
+              (pref) => (
+                <button
+                  key={pref}
+                  onClick={() => setDietPref(pref)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    dietPref === pref
+                      ? "bg-red-100 text-red-700 border border-red-300"
+                      : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                  }`}
+                >
+                  {pref}
+                </button>
+              )
+            )}
           </div>
 
           {/* Category Filter */}
           <div className="flex flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-600 py-2">Categories:</span>
+            <span className="text-sm font-medium text-gray-600 py-2">
+              Categories:
+            </span>
             {categories.map((category) => (
               <button
                 key={category}
@@ -188,7 +249,9 @@ export default function FinalizeMeals() {
 
           {/* Tag Filters */}
           <div className="flex flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-600 py-2">Filters:</span>
+            <span className="text-sm font-medium text-gray-600 py-2">
+              Filters:
+            </span>
             {filters.map((filter) => (
               <button
                 key={filter}
@@ -244,7 +307,9 @@ export default function FinalizeMeals() {
 
         {/* Meals Display */}
         {categories
-          .filter((cat) => selectedCategory === "all" || cat === selectedCategory)
+          .filter(
+            (cat) => selectedCategory === "all" || cat === selectedCategory
+          )
           .map((cat) => (
             <div key={cat} className="mb-12">
               <h2 className="text-2xl font-bold text-gray-800 capitalize mb-6">

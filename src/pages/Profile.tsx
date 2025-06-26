@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../utils/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
 
 interface WeightEntry {
   id: string;
@@ -124,6 +125,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12">
+      <Header />
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-orange-800">Your Profile</h1>

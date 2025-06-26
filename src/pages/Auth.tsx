@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import Header from "../components/Header";
 
+import { supabase } from "../utils/supabaseClient";
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const navigate = useNavigate();
   const { signUp, signIn } = useAuth();
 
@@ -33,13 +36,19 @@ const Auth = () => {
           navigate("/enter-details");
         }
       } else {
-        const { fullName, phone, address } = formData;
-        if (!fullName.trim() || !phone.trim() || !address.trim()) {
-          alert("Please fill in all required fields");
+        const { fullName, phone, address, email, password } = formData;
+
+        if (!fullName || !phone || !address) {
+          alert("Please fill in all required fields.");
           return;
         }
 
-        const { error } = await signUp(formData.email, formData.password, {
+        if (!agreed) {
+          alert("You must agree to the Terms and Conditions.");
+          return;
+        }
+
+        const { error } = await signUp(email, password, {
           full_name: fullName,
           phone,
           address,
@@ -52,7 +61,7 @@ const Auth = () => {
           navigate("/enter-details");
         }
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Unexpected error:", err);
       alert("Unexpected error occurred.");
     } finally {
@@ -60,85 +69,163 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const email = prompt("Enter your email to reset password:");
+    if (!email) return;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      alert("Error sending reset email. Check your email.");
+    } else {
+      alert("Password reset link sent to your email.");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-xl">
-        <h2 className="text-3xl font-bold text-white text-center mb-2">
-          {isLogin ? "Sign In" : "Create Account"}
-        </h2>
-        <p className="text-white text-center mb-6">
-          {isLogin ? "Welcome back to SpiceFit" : "Join SpiceFit today"}
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <>
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={formData.fullName}
-                onChange={(e) => handleInputChange("fullName", e.target.value)}
-                className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
-                required
-              />
-              <input
-                type="tel"
-                placeholder="Phone Number"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
-                className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Address"
-                value={formData.address}
-                onChange={(e) => handleInputChange("address", e.target.value)}
-                className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
-                required
-              />
-            </>
-          )}
-
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-            className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => handleInputChange("password", e.target.value)}
-            className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded bg-white text-orange-700 font-semibold hover:bg-white/90 transition"
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+        <div className="relative w-full max-w-md bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-xl shadow-xl text-white">
+          <span
+            className="absolute top-2 right-3 cursor-pointer material-symbols-rounded text-xl"
+            onClick={() => navigate("/")}
           >
-            {loading
-              ? "Please wait..."
-              : isLogin
-              ? "Sign In"
-              : "Create Account"}
-          </button>
-        </form>
+            X
+          </span>
 
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-white underline text-sm"
-          >
-            {isLogin
-              ? "Don't have an account? Sign up"
-              : "Already have an account? Sign in"}
-          </button>
+          <h2 className="text-3xl font-bold text-center mb-2">
+            {isLogin ? "Sign In" : "Create Account"}
+          </h2>
+          <p className="text-center mb-6">
+            {isLogin ? "Welcome back to SpiceBox" : "Join SpiceBox today"}
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <>
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={formData.fullName}
+                  onChange={(e) =>
+                    handleInputChange("fullName", e.target.value)
+                  }
+                  className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+                  required
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+                  required
+                />
+              </>
+            )}
+
+            <input
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
+              className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+              required
+            />
+
+            {!isLogin && (
+              <label className="flex items-center space-x-2 text-sm text-white">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="accent-white"
+                />
+                <span>
+                  I agree to the{" "}
+                  <a href="/terms" className="underline">
+                    Terms & Conditions
+                  </a>
+                </span>
+              </label>
+            )}
+            {isLogin && (
+              <div className="text-left mt-2">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-white underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded bg-white text-orange-700 font-semibold hover:bg-white/90 transition"
+            >
+              {loading
+                ? "Please wait..."
+                : isLogin
+                ? "Sign In"
+                : "Create Account"}
+            </button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">Or</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <button className="w-full py-2 rounded bg-[#4267B2] text-white flex items-center justify-center">
+                <img
+                  src="/facebook.png"
+                  alt="Facebook"
+                  className="h-7 w-7 mr-2"
+                />
+                Login with Facebook
+              </button>
+              <button className="w-full py-2 rounded border rounded bg-white border-gray-300 text-gray-700 flex items-center justify-center">
+                <img src="/google.png" alt="Google" className="h-5 w-5 mr-2" />
+                Login with Google
+              </button>
+            </div>
+          </form>
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-white underline text-sm"
+            >
+              {isLogin
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Sign in"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
