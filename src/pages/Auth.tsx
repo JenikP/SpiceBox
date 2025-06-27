@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import Header from "../components/Header";
-
 import { supabase } from "../utils/supabaseClient";
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -100,76 +100,12 @@ const Auth = () => {
 
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-white mb-2">
-              {isSignUp ? "Join SpiceBox" : "Welcome Back"}
+              {isLogin ? "Welcome Back" : "Join SpiceBox"}
             </h2>
             <p className="text-orange-100">
-              {isSignUp ? "Start your healthy journey today" : "Continue your healthy journey"}
+              {isLogin ? "Continue your healthy journey" : "Start your healthy journey today"}
             </p>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-white text-orange-600 py-3 px-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
-            >
-              {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
-            </button>
-          </form>
-
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-white hover:text-orange-200 transition-colors underline"
-            >
-              {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
-            </button>
-          </div>
-
-          {!isSignUp && (
-            <div className="mt-2 text-center">
-              <button
-                onClick={handleForgotPassword}
-                className="text-orange-200 hover:text-white transition-colors text-sm"
-              >
-                Forgot Password?
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Auth;
-
-          <h2 className="text-3xl font-bold text-center mb-2">
-            {isLogin ? "Sign In" : "Create Account"}
-          </h2>
-          <p className="text-center mb-6">
-            {isLogin ? "Welcome back to SpiceBox" : "Join SpiceBox today"}
-          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
@@ -178,10 +114,8 @@ export default Auth;
                   type="text"
                   placeholder="Full Name"
                   value={formData.fullName}
-                  onChange={(e) =>
-                    handleInputChange("fullName", e.target.value)
-                  }
-                  className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+                  onChange={(e) => handleInputChange("fullName", e.target.value)}
+                  className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                   required
                 />
                 <input
@@ -189,7 +123,7 @@ export default Auth;
                   placeholder="Phone Number"
                   value={formData.phone}
                   onChange={(e) => handleInputChange("phone", e.target.value)}
-                  className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+                  className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                   required
                 />
                 <input
@@ -197,7 +131,7 @@ export default Auth;
                   placeholder="Address"
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
-                  className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+                  className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                   required
                 />
               </>
@@ -208,7 +142,7 @@ export default Auth;
               placeholder="Email"
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+              className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
               required
             />
             <input
@@ -216,7 +150,7 @@ export default Auth;
               placeholder="Password"
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
-              className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2"
+              className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
               required
             />
 
@@ -236,62 +170,57 @@ export default Auth;
                 </span>
               </label>
             )}
-            {isLogin && (
-              <div className="text-left mt-2">
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  className="text-sm text-white underline"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-            )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded bg-white text-orange-700 font-semibold hover:bg-white/90 transition"
+              className="w-full bg-white text-orange-600 py-3 px-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
-              {loading
-                ? "Please wait..."
-                : isLogin
-                ? "Sign In"
-                : "Create Account"}
+              {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
             </button>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Or</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <button className="w-full py-2 rounded bg-[#4267B2] text-white flex items-center justify-center">
-                <img
-                  src="/facebook.png"
-                  alt="Facebook"
-                  className="h-7 w-7 mr-2"
-                />
-                Login with Facebook
-              </button>
-              <button className="w-full py-2 rounded border rounded bg-white border-gray-300 text-gray-700 flex items-center justify-center">
-                <img src="/google.png" alt="Google" className="h-5 w-5 mr-2" />
-                Login with Google
-              </button>
-            </div>
           </form>
+
           <div className="mt-4 text-center">
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-white underline text-sm"
+              className="text-white hover:text-orange-200 transition-colors underline"
             >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"}
+              {isLogin ? "Need an account? Sign Up" : "Already have an account? Sign In"}
+            </button>
+          </div>
+
+          {isLogin && (
+            <div className="mt-2 text-center">
+              <button
+                onClick={handleForgotPassword}
+                className="text-orange-200 hover:text-white transition-colors text-sm"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white border-opacity-30"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-gradient-to-br from-orange-500 to-red-500 px-2 text-white">Or</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <button className="w-full py-2 rounded bg-[#4267B2] text-white flex items-center justify-center">
+              <img
+                src="/facebook.png"
+                alt="Facebook"
+                className="h-7 w-7 mr-2"
+              />
+              Login with Facebook
+            </button>
+            <button className="w-full py-2 rounded border bg-white border-gray-300 text-gray-700 flex items-center justify-center">
+              <img src="/google.png" alt="Google" className="h-5 w-5 mr-2" />
+              Login with Google
             </button>
           </div>
         </div>

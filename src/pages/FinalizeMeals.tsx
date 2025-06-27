@@ -417,7 +417,7 @@ import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import { meals } from "../data/meals";
 
-const FinalizeMeals = () => {
+const FinalizeMealsPage = () => {
   const [selectedMeals, setSelectedMeals] = useState<{[key: string]: any[]}>({
     breakfast: [],
     lunch: [],
@@ -706,4 +706,4 @@ const FinalizeMeals = () => {
   );
 };
 
-export default FinalizeMeals;
+export default FinalizeMealsPage;

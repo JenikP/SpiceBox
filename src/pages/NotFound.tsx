@@ -28,12 +28,11 @@ const NotFound = () => {
   );
 };
 
-export default NotFound;
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout";
 
-const NotFound = () => {
+const NotFoundPage = () => {
   return (
     <Layout>
       <section className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
@@ -80,4 +79,4 @@ const NotFound = () => {
   );
 };
 
-export default NotFound;
+export default NotFoundPage;
