@@ -468,3 +468,194 @@ export const meals = [
     "image": "https://i.ytimg.com/vi/LHXlMB002_Y/sddefault.jpg"
   },
 ];
+export const meals = [
+  // Breakfast meals
+  {
+    id: 1,
+    name: "Masala Oats with Vegetables",
+    category: "breakfast",
+    description: "Nutritious oats cooked with Indian spices, mixed vegetables, and a touch of turmeric for a healthy start to your day.",
+    image: "/masalaoats.jpg",
+    calories: 320,
+    protein: 12,
+    carbs: 45,
+    fat: 8,
+    rating: 4.5,
+    prepTime: "10 mins",
+    tags: ["vegetarian", "high-fiber", "protein-rich"]
+  },
+  {
+    id: 2,
+    name: "Poha with Green Vegetables",
+    category: "breakfast",
+    description: "Light and fluffy beaten rice with curry leaves, mustard seeds, and fresh vegetables.",
+    image: "/Poha-Recipe.jpg",
+    calories: 280,
+    protein: 8,
+    carbs: 52,
+    fat: 6,
+    rating: 4.3,
+    prepTime: "15 mins",
+    tags: ["vegetarian", "gluten-free", "light"]
+  },
+  {
+    id: 3,
+    name: "Vegetable Idli",
+    category: "breakfast",
+    description: "Steamed rice cakes with mixed vegetables, served with coconut chutney and sambar.",
+    image: "/vegidli.jpg",
+    calories: 250,
+    protein: 10,
+    carbs: 40,
+    fat: 5,
+    rating: 4.6,
+    prepTime: "20 mins",
+    tags: ["vegetarian", "steamed", "south-indian"]
+  },
+  {
+    id: 4,
+    name: "Egg Bhurji",
+    category: "breakfast",
+    description: "Scrambled eggs with onions, tomatoes, and aromatic Indian spices.",
+    image: "/Egg-Bhurji.jpg",
+    calories: 290,
+    protein: 18,
+    carbs: 8,
+    fat: 20,
+    rating: 4.4,
+    prepTime: "12 mins",
+    tags: ["non-vegetarian", "high-protein", "keto-friendly"]
+  },
+
+  // Lunch meals
+  {
+    id: 5,
+    name: "Quinoa Chole",
+    category: "lunch",
+    description: "High-protein quinoa cooked with chickpeas in a rich, spicy tomato-based curry.",
+    image: "/chole-quinoa.jpg",
+    calories: 450,
+    protein: 18,
+    carbs: 65,
+    fat: 12,
+    rating: 4.7,
+    prepTime: "25 mins",
+    tags: ["vegetarian", "high-protein", "superfood"]
+  },
+  {
+    id: 6,
+    name: "Chicken Sausage Wrap",
+    category: "lunch",
+    description: "Whole wheat wrap filled with spiced chicken sausage, fresh vegetables, and mint chutney.",
+    image: "/chicken-sausage-wrap.jpg",
+    calories: 380,
+    protein: 25,
+    carbs: 35,
+    fat: 15,
+    rating: 4.5,
+    prepTime: "15 mins",
+    tags: ["non-vegetarian", "high-protein", "portable"]
+  },
+  {
+    id: 7,
+    name: "Dal Khichdi Bowl",
+    category: "lunch",
+    description: "Comfort food with mixed lentils and rice, topped with ghee and served with pickle.",
+    image: "/masalaoats.jpg",
+    calories: 360,
+    protein: 14,
+    carbs: 58,
+    fat: 8,
+    rating: 4.2,
+    prepTime: "30 mins",
+    tags: ["vegetarian", "comfort-food", "digestive"]
+  },
+
+  // Dinner meals
+  {
+    id: 8,
+    name: "Paneer Tikka with Brown Rice",
+    category: "dinner",
+    description: "Grilled cottage cheese marinated in yogurt and spices, served with nutty brown rice.",
+    image: "/pannertikka.jpg",
+    calories: 420,
+    protein: 22,
+    carbs: 45,
+    fat: 16,
+    rating: 4.8,
+    prepTime: "20 mins",
+    tags: ["vegetarian", "grilled", "high-protein"]
+  },
+  {
+    id: 9,
+    name: "Fish Curry with Cauliflower Rice",
+    category: "dinner",
+    description: "Kerala-style fish curry made with coconut milk, served with low-carb cauliflower rice.",
+    image: "/masalaoats.jpg",
+    calories: 340,
+    protein: 28,
+    carbs: 15,
+    fat: 18,
+    rating: 4.6,
+    prepTime: "25 mins",
+    tags: ["non-vegetarian", "low-carb", "south-indian"]
+  },
+  {
+    id: 10,
+    name: "Rajma Bowl",
+    category: "dinner",
+    description: "Protein-rich kidney beans in a thick, spiced gravy with steamed quinoa.",
+    image: "/chole-quinoa.jpg",
+    calories: 390,
+    protein: 16,
+    carbs: 60,
+    fat: 10,
+    rating: 4.4,
+    prepTime: "35 mins",
+    tags: ["vegetarian", "high-protein", "north-indian"]
+  },
+
+  // Snacks
+  {
+    id: 11,
+    name: "Vegan Smoothie Bowl",
+    category: "snack",
+    description: "Nutrient-dense smoothie bowl with mixed berries, nuts, and Indian superfoods.",
+    image: "/vegan-smoothie-bowl.jpg",
+    calories: 220,
+    protein: 8,
+    carbs: 35,
+    fat: 6,
+    rating: 4.5,
+    prepTime: "5 mins",
+    tags: ["vegan", "antioxidant-rich", "superfood"]
+  },
+  {
+    id: 12,
+    name: "Baked Samosa",
+    category: "snack",
+    description: "Healthier version of the classic snack, baked instead of fried with spiced potato filling.",
+    image: "/masalaoats.jpg",
+    calories: 180,
+    protein: 6,
+    carbs: 28,
+    fat: 5,
+    rating: 4.3,
+    prepTime: "8 mins",
+    tags: ["vegetarian", "baked", "traditional"]
+  },
+  {
+    id: 13,
+    name: "Protein Laddu",
+    category: "snack",
+    description: "Energy balls made with dates, nuts, and protein powder for a post-workout treat.",
+    image: "/vegan-smoothie-bowl.jpg",
+    calories: 150,
+    protein: 12,
+    carbs: 15,
+    fat: 8,
+    rating: 4.2,
+    prepTime: "0 mins",
+    tags: ["vegetarian", "high-protein", "energy-boost"]
+  }
+];

@@ -89,12 +89,80 @@ const Auth = () => {
       <Header />
       <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
         <div className="relative w-full max-w-md bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-xl shadow-xl text-white">
-          <span
-            className="absolute top-2 right-3 cursor-pointer material-symbols-rounded text-xl"
+          <button
+            className="absolute top-2 right-3 cursor-pointer text-white hover:text-gray-200 transition-colors"
             onClick={() => navigate("/")}
           >
-            X
-          </span>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {isSignUp ? "Join SpiceBox" : "Welcome Back"}
+            </h2>
+            <p className="text-orange-100">
+              {isSignUp ? "Start your healthy journey today" : "Continue your healthy journey"}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+              />
+            </div>
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-white text-orange-600 py-3 px-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
+            >
+              {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+            </button>
+          </form>
+
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-white hover:text-orange-200 transition-colors underline"
+            >
+              {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
+            </button>
+          </div>
+
+          {!isSignUp && (
+            <div className="mt-2 text-center">
+              <button
+                onClick={handleForgotPassword}
+                className="text-orange-200 hover:text-white transition-colors text-sm"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Auth;
 
           <h2 className="text-3xl font-bold text-center mb-2">
             {isLogin ? "Sign In" : "Create Account"}
