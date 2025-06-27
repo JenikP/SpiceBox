@@ -1,7 +1,4 @@
-` tags. I will pay close attention to indentation, structure, and completeness.
 
-```
-<replit_final_file>
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout";
