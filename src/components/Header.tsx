@@ -11,6 +11,7 @@ const Header = () => {
     { name: "Plans", path: "/plan" },
     { name: "Contact", path: "/contact" },
     { name: "Profile", path: "/profile" },
+    { name: "Checkout", path: "/checkout" },
   ];
 
   return (
@@ -35,10 +36,11 @@ const Header = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-sm font-medium transition-colors hover:text-orange-600 ${location.pathname === item.path
-                  ? "text-orange-600 border-b-2 border-orange-600"
-                  : "text-gray-700"
-                  }`}
+                className={`text-sm font-medium transition-colors hover:text-orange-600 ${
+                  location.pathname === item.path
+                    ? "text-orange-600 border-b-2 border-orange-600"
+                    : "text-gray-700"
+                }`}
               >
                 {item.name}
               </Link>
