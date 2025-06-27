@@ -1,452 +1,501 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../utils/supabaseClient";
-import Header from "../components/Header";
+import Layout from "../components/Layout";
 
-interface FormData {
-  gender: string;
-  age: string;
-  weight: string;
-  height: string;
-  goal: string;
-  timeframe: string;
-  dietaryPreference: string;
-  activityLevel: string;
-}
+const formSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
+  email: z.string().email("Please enter a valid email"),
+  phone: z.string().min(10, "Please enter a valid phone number"),
+  age: z.number().min(18, "You must be at least 18 years old").max(100, "Please enter a valid age"),
+  gender: z.enum(["male", "female", "other"]),
+  height: z.number().min(120, "Height must be at least 120cm").max(250, "Please enter a valid height"),
+  currentWeight: z.number().min(30, "Weight must be at least 30kg").max(300, "Please enter a valid weight"),
+  goalWeight: z.number().min(30, "Goal weight must be at least 30kg").max(300, "Please enter a valid goal weight"),
+  activityLevel: z.enum(["sedentary", "lightly-active", "moderately-active", "very-active"]),
+  dietaryPreference: z.enum(["vegetarian", "non-vegetarian", "vegan", "pescatarian"]),
+  allergies: z.string().optional(),
+  medicalConditions: z.string().optional(),
+  goal: z.enum(["weight-loss", "muscle-gain", "maintenance", "general-health"]),
+  timeline: z.enum(["1-month", "3-months", "6-months", "1-year"]),
+});
 
-interface FormErrors {
-  weight: string;
-  height: string;
-  goal: string;
-  timeframe: string;
-}
+type FormData = z.infer<typeof formSchema>;
 
-export default function EnterDetailsPage() {
+const EnterDetails = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 4;
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<FormData>({
-    gender: "",
-    age: "",
-    weight: "",
-    height: "",
-    goal: "",
-    timeframe: "24",
-    dietaryPreference: "",
-    activityLevel: "",
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+    trigger,
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
   });
 
-  const [errors, setErrors] = useState<FormErrors>({
-    weight: "",
-    height: "",
-    goal: "",
-    timeframe: "",
-  });
-
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const validateField = (field: keyof FormErrors) => {
-    const weight = parseFloat(formData.weight);
-    const height = parseFloat(formData.height);
-    const goal = parseFloat(formData.goal);
-    const timeframe = parseInt(formData.timeframe);
-    const height_m = height / 100;
-    const minHealthyWeight = 18.5 * height_m * height_m;
-    const finalWeight = weight - goal;
-    const newErrors: FormErrors = { ...errors };
-    const weeklyLoss = goal / timeframe;
-
-    switch (field) {
-      case "weight":
-        if (isNaN(weight) || weight < 30 || weight > 300) {
-          newErrors.weight =
-            "Please enter a valid number between 30 kg and 300 kg.";
-        } else if (weight < minHealthyWeight) {
-          newErrors.weight =
-            "Your current weight is below the healthy minimum for your height. Please review your input or goal.";
-        } else {
-          newErrors.weight = "";
-        }
+  const nextStep = async () => {
+    let fieldsToValidate: (keyof FormData)[] = [];
+    
+    switch (currentStep) {
+      case 1:
+        fieldsToValidate = ["fullName", "email", "phone"];
         break;
-      case "height":
-        if (isNaN(height) || height < 100 || height > 250) {
-          newErrors.height =
-            "Please enter a valid height between 100 cm and 250 cm.";
-        } else {
-          newErrors.height = "";
-        }
+      case 2:
+        fieldsToValidate = ["age", "gender", "height", "currentWeight", "goalWeight"];
         break;
-      case "goal":
-        if (isNaN(goal) || goal <= 0 || goal >= weight) {
-          newErrors.goal =
-            "Please enter a valid weight loss goal that is less than your current weight.";
-        } else if (finalWeight < minHealthyWeight) {
-          newErrors.goal =
-            "Your weight loss goal is too aggressive. It would bring you below the healthy minimum weight for your height.";
-        } else {
-          newErrors.goal = "";
-        }
+      case 3:
+        fieldsToValidate = ["activityLevel", "dietaryPreference"];
         break;
-      case "timeframe":
-        if (isNaN(timeframe) || timeframe < 4 || timeframe > 52) {
-          newErrors.timeframe =
-            "Please enter a timeframe between 4 and 52 weeks.";
-        } else if (weeklyLoss > 1.0) {
-          newErrors.timeframe =
-            "This goal is too aggressive. Losing more than 1 kg per week is not considered safe.";
-        } else {
-          newErrors.timeframe = "";
-        }
-        break;
-      default:
+      case 4:
+        fieldsToValidate = ["goal", "timeline"];
         break;
     }
 
-    setErrors(newErrors);
-  };
-
-  const isFormValid = () => {
-    return !Object.values(errors).some((e) => e.length > 0);
-  };
-
-  useEffect(() => {
-    document.addEventListener("wheel", disableScrollOnNumberInput, {
-      passive: false,
-    });
-    return () => {
-      document.removeEventListener("wheel", disableScrollOnNumberInput);
-    };
-  }, []);
-
-  const disableScrollOnNumberInput = (e: WheelEvent) => {
-    if ((document.activeElement as HTMLInputElement)?.type === "number") {
-      e.preventDefault();
+    const isValid = await trigger(fieldsToValidate);
+    if (isValid && currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
-  const handleSubmit = async (e: React.SyntheticEvent) => {
-    e.preventDefault();
-
-    if (!isFormValid()) {
-      alert("Please fix the errors before submitting the form");
-      return;
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
-
-    ["weight", "height", "goal", "timeframe"].forEach((field) =>
-      validateField(field as keyof FormErrors)
-    );
-
-    const ageMap: Record<string, number> = {
-      "18-25": 22,
-      "26-39": 32,
-      "40-49": 45,
-      "50+": 55,
-    };
-
-    const ageValue = ageMap[formData.age];
-    const height = parseFloat(formData.height);
-    const weight = parseFloat(formData.weight);
-    const goal = parseFloat(formData.goal);
-    const weeks = parseInt(formData.timeframe);
-    const gender = formData.gender;
-
-    // ✅ Calculate calories (in kilojoules)
-    const bmr =
-      gender === "male"
-        ? 88.362 + 13.397 * weight + 4.799 * height - 5.677 * ageValue
-        : 447.593 + 9.247 * weight + 3.098 * height - 4.33 * ageValue;
-
-    const multiplier =
-      formData.activityLevel === "high"
-        ? 1.725
-        : formData.activityLevel === "moderate"
-        ? 1.55
-        : 1.375;
-
-    const tdee = bmr * multiplier;
-    const deficit = Math.min((goal / weeks) * 7700, 1000);
-    const calories = Math.max(
-      Math.round(tdee - deficit),
-      gender === "female" ? 1200 : 1500
-    );
-    const kilojoules = Math.round(calories * 4.184); // ✅ Convert to kJ
-
-    // ✅ Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      alert("User not authenticated. Please log in again.");
-      return;
-    }
-
-    // ✅ Check if user_details already exists
-    const {
-      data: existingData,
-      error: checkError,
-      status,
-    } = await supabase
-      .from("user_details")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle(); // ✅ allows null without throwing an error
-
-    if (checkError && status !== 406) {
-      console.error("Error checking user details:", checkError);
-      alert("Failed to check user details. Please try again.");
-      return;
-    }
-
-    const payload = {
-      user_id: user.id,
-      gender,
-      weight: weight,
-      age: ageValue,
-      height,
-      activity_level: formData.activityLevel,
-      weight_loss_goal: goal,
-      timeframe_weeks: weeks,
-      dietary_preference: formData.dietaryPreference,
-      calculated_daily_calories: kilojoules,
-      updated_at: new Date().toISOString(),
-    };
-
-    let error;
-
-    if (existingData) {
-      // 🔁 Update existing
-      const { error: updateError } = await supabase
-        .from("user_details")
-        .update(payload)
-        .eq("user_id", user.id);
-      error = updateError;
-    } else {
-      // 🆕 Insert new
-      const { error: insertError } = await supabase
-        .from("user_details")
-        .insert(payload);
-      error = insertError;
-    }
-
-    if (error) {
-      console.error("Error saving to Supabase:", error);
-      alert("Failed to save your details. Please try again.");
-      return;
-    }
-
-    navigate("/personalized-plan");
   };
+
+  const onSubmit = (data: FormData) => {
+    console.log("Form submitted:", data);
+    // Save data and navigate to personalized plan
+    navigate("/personalized-plan", { state: { formData: data } });
+  };
+
+  const currentWeight = watch("currentWeight");
+  const goalWeight = watch("goalWeight");
+  const bmi = currentWeight && watch("height") ? (currentWeight / Math.pow(watch("height") / 100, 2)).toFixed(1) : null;
+
+  const stepTitles = [
+    "Personal Information",
+    "Physical Details",
+    "Lifestyle & Preferences",
+    "Goals & Timeline"
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-20 px-6">
-        <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl p-12 space-y-12">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-4">
-              Let's Personalize Your Plan
+    <Layout>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-orange-50 to-red-50 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+              Let's Create Your{" "}
+              <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                Perfect Plan
+              </span>
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Tell us about your goals and preferences so we can craft a meal
-              plan tailored just for you.
+              Tell us about yourself so we can design a personalized meal plan that fits your lifestyle and helps you achieve your goals.
             </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Progress Bar */}
+      <section className="py-8 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              {Array.from({ length: totalSteps }, (_, i) => (
+                <div key={i} className="flex items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                      i + 1 <= currentStep
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    {i + 1}
+                  </div>
+                  {i < totalSteps - 1 && (
+                    <div
+                      className={`flex-1 h-1 mx-4 ${
+                        i + 1 < currentStep
+                          ? 'bg-gradient-to-r from-orange-500 to-red-500'
+                          : 'bg-gray-200'
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Step {currentStep}: {stepTitles[currentStep - 1]}
+              </h2>
+              <p className="text-gray-600">
+                {currentStep} of {totalSteps} completed
+              </p>
+            </div>
           </div>
+        </div>
+      </section>
 
-          <form onSubmit={handleSubmit} className="space-y-10 text-xl">
-            {/* Gender */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-3">
-                Gender
-              </label>
-              <div className="grid grid-cols-2 gap-6">
-                {["male", "female"].map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => handleChange("gender", g)}
-                    className={`py-4 rounded-xl font-semibold transition-all ${
-                      formData.gender === g
-                        ? "bg-red-500 text-white shadow-lg"
-                        : "bg-gray-100 text-gray-700 hover:bg-red-100"
-                    }`}
-                  >
-                    {g.charAt(0).toUpperCase() + g.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Form Section */}
+      <section className="py-12 bg-gradient-to-br from-orange-50 to-red-50">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-2xl shadow-xl p-8"
+          >
+            <form onSubmit={handleSubmit(onSubmit)}>
+              {/* Step 1: Personal Information */}
+              {currentStep === 1 && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      {...register("fullName")}
+                      type="text"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="Enter your full name"
+                    />
+                    {errors.fullName && (
+                      <p className="text-red-600 text-sm mt-1">{errors.fullName.message}</p>
+                    )}
+                  </div>
 
-            {/* Age */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-3">
-                Age Group
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {["18-25", "26-39", "40-49", "50+"].map((range) => (
-                  <button
-                    key={range}
-                    type="button"
-                    onClick={() => handleChange("age", range)}
-                    className={`py-3 rounded-xl font-semibold transition-all ${
-                      formData.age === range
-                        ? "bg-red-500 text-white shadow-lg"
-                        : "bg-gray-100 text-gray-700 hover:bg-red-100"
-                    }`}
-                  >
-                    {range}
-                  </button>
-                ))}
-              </div>
-            </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      {...register("email")}
+                      type="email"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="Enter your email address"
+                    />
+                    {errors.email && (
+                      <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
+                    )}
+                  </div>
 
-            {/* Weight */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-3">
-                Current Weight (kg)
-              </label>
-              <input
-                type="number"
-                min="30"
-                max="300"
-                placeholder="e.g. 75"
-                value={formData.weight}
-                onChange={(e) => handleChange("weight", e.target.value)}
-                onBlur={() => validateField("weight")}
-                className="w-full py-4 px-5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-500 text-xl"
-                required
-              />
-              {errors.weight && (
-                <p className="text-red-500 text-sm mt-2">{errors.weight}</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number *
+                    </label>
+                    <input
+                      {...register("phone")}
+                      type="tel"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="Enter your phone number"
+                    />
+                    {errors.phone && (
+                      <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
+                    )}
+                  </div>
+                </div>
               )}
-            </div>
 
-            {/* Height */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-3">
-                Height (cm)
-              </label>
-              <input
-                type="number"
-                min="100"
-                max="250"
-                placeholder="e.g. 170"
-                value={formData.height}
-                onChange={(e) => handleChange("height", e.target.value)}
-                onBlur={() => validateField("height")}
-                className="w-full py-4 px-5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-500 text-xl"
-                required
-              />
-              {errors.height && (
-                <p className="text-red-500 text-sm mt-2">{errors.height}</p>
-              )}
-            </div>
+              {/* Step 2: Physical Details */}
+              {currentStep === 2 && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Age *
+                      </label>
+                      <input
+                        {...register("age", { valueAsNumber: true })}
+                        type="number"
+                        min="18"
+                        max="100"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        placeholder="Enter your age"
+                      />
+                      {errors.age && (
+                        <p className="text-red-600 text-sm mt-1">{errors.age.message}</p>
+                      )}
+                    </div>
 
-            {/* Weight Loss Goal */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-3">
-                Weight Loss Goal (kg)
-              </label>
-              <input
-                type="number"
-                placeholder="e.g. 5"
-                value={formData.goal}
-                onChange={(e) => handleChange("goal", e.target.value)}
-                onBlur={() => validateField("goal")}
-                className="w-full py-4 px-5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-500 text-xl"
-                required
-              />
-              {errors.goal && (
-                <p className="text-red-500 text-sm mt-2">{errors.goal}</p>
-              )}
-            </div>
-
-            {/* Timeframe */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-4">
-                Choose a Timeframe (weeks)
-              </label>
-              <input
-                type="number"
-                min={4}
-                max={52}
-                value={formData.timeframe}
-                onChange={(e) => handleChange("timeframe", e.target.value)}
-                onBlur={() => validateField("timeframe")}
-                className="w-full text-center py-2 px-4 mb-4 border border-gray-300 rounded-lg text-lg"
-                placeholder="24"
-              />
-              {errors.timeframe && (
-                <p className="text-red-500 text-sm mt-2">{errors.timeframe}</p>
-              )}
-            </div>
-
-            {/* Dietary Preference */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-3">
-                Dietary Preference
-              </label>
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-                {["No preference", "Vegetarian", "Vegan", "Keto", "Halal"].map(
-                  (opt) => {
-                    const key = opt.toLowerCase().replace(" ", "");
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => handleChange("dietaryPreference", key)}
-                        className={`py-3 text-base rounded-xl font-medium transition-all ${
-                          formData.dietaryPreference === key
-                            ? "bg-red-500 text-white shadow"
-                            : "bg-gray-100 text-gray-700 hover:bg-red-100"
-                        }`}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Gender *
+                      </label>
+                      <select
+                        {...register("gender")}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
-                        {opt}
-                      </button>
-                    );
-                  }
+                        <option value="">Select your gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                      {errors.gender && (
+                        <p className="text-red-600 text-sm mt-1">{errors.gender.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Height (cm) *
+                    </label>
+                    <input
+                      {...register("height", { valueAsNumber: true })}
+                      type="number"
+                      min="120"
+                      max="250"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="Enter your height in centimeters"
+                    />
+                    {errors.height && (
+                      <p className="text-red-600 text-sm mt-1">{errors.height.message}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Current Weight (kg) *
+                      </label>
+                      <input
+                        {...register("currentWeight", { valueAsNumber: true })}
+                        type="number"
+                        min="30"
+                        max="300"
+                        step="0.1"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        placeholder="Enter current weight"
+                      />
+                      {errors.currentWeight && (
+                        <p className="text-red-600 text-sm mt-1">{errors.currentWeight.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Goal Weight (kg) *
+                      </label>
+                      <input
+                        {...register("goalWeight", { valueAsNumber: true })}
+                        type="number"
+                        min="30"
+                        max="300"
+                        step="0.1"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        placeholder="Enter goal weight"
+                      />
+                      {errors.goalWeight && (
+                        <p className="text-red-600 text-sm mt-1">{errors.goalWeight.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {bmi && (
+                    <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-700">
+                        <strong>Current BMI:</strong> {bmi} (
+                        {parseFloat(bmi) < 18.5 ? "Underweight" :
+                         parseFloat(bmi) < 25 ? "Normal" :
+                         parseFloat(bmi) < 30 ? "Overweight" : "Obese"})
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Step 3: Lifestyle & Preferences */}
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Activity Level *
+                    </label>
+                    <div className="space-y-3">
+                      {[
+                        { value: "sedentary", label: "Sedentary", desc: "Little to no exercise" },
+                        { value: "lightly-active", label: "Lightly Active", desc: "Light exercise 1-3 days/week" },
+                        { value: "moderately-active", label: "Moderately Active", desc: "Moderate exercise 3-5 days/week" },
+                        { value: "very-active", label: "Very Active", desc: "Heavy exercise 6-7 days/week" }
+                      ].map((option) => (
+                        <label key={option.value} className="flex items-start space-x-3 cursor-pointer">
+                          <input
+                            {...register("activityLevel")}
+                            type="radio"
+                            value={option.value}
+                            className="mt-1 text-orange-500 focus:ring-orange-500"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">{option.label}</div>
+                            <div className="text-sm text-gray-600">{option.desc}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    {errors.activityLevel && (
+                      <p className="text-red-600 text-sm mt-1">{errors.activityLevel.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Dietary Preference *
+                    </label>
+                    <select
+                      {...register("dietaryPreference")}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                      <option value="">Select your dietary preference</option>
+                      <option value="vegetarian">Vegetarian</option>
+                      <option value="non-vegetarian">Non-Vegetarian</option>
+                      <option value="vegan">Vegan</option>
+                      <option value="pescatarian">Pescatarian</option>
+                    </select>
+                    {errors.dietaryPreference && (
+                      <p className="text-red-600 text-sm mt-1">{errors.dietaryPreference.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Food Allergies or Restrictions
+                    </label>
+                    <textarea
+                      {...register("allergies")}
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="List any food allergies, intolerances, or foods you prefer to avoid..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Medical Conditions
+                    </label>
+                    <textarea
+                      {...register("medicalConditions")}
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="Any medical conditions that might affect your diet (diabetes, hypertension, etc.)..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Goals & Timeline */}
+              {currentStep === 4 && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Primary Goal *
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { value: "weight-loss", label: "Weight Loss", icon: "⚖️" },
+                        { value: "muscle-gain", label: "Muscle Gain", icon: "💪" },
+                        { value: "maintenance", label: "Weight Maintenance", icon: "🎯" },
+                        { value: "general-health", label: "General Health", icon: "❤️" }
+                      ].map((option) => (
+                        <label key={option.value} className="cursor-pointer">
+                          <input
+                            {...register("goal")}
+                            type="radio"
+                            value={option.value}
+                            className="sr-only"
+                          />
+                          <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-orange-300 transition-colors duration-200 peer-checked:border-orange-500 peer-checked:bg-orange-50">
+                            <div className="text-2xl mb-2">{option.icon}</div>
+                            <div className="font-medium text-gray-900">{option.label}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    {errors.goal && (
+                      <p className="text-red-600 text-sm mt-1">{errors.goal.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Timeline *
+                    </label>
+                    <select
+                      {...register("timeline")}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                      <option value="">Select your timeline</option>
+                      <option value="1-month">1 Month</option>
+                      <option value="3-months">3 Months</option>
+                      <option value="6-months">6 Months</option>
+                      <option value="1-year">1 Year</option>
+                    </select>
+                    {errors.timeline && (
+                      <p className="text-red-600 text-sm mt-1">{errors.timeline.message}</p>
+                    )}
+                  </div>
+
+                  {currentWeight && goalWeight && (
+                    <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-2">Your Goal Summary</h4>
+                      <p className="text-sm text-gray-700">
+                        Target: {Math.abs(currentWeight - goalWeight).toFixed(1)}kg {currentWeight > goalWeight ? 'weight loss' : 'weight gain'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between pt-8">
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  disabled={currentStep === 1}
+                  className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  Previous
+                </button>
+
+                {currentStep < totalSteps ? (
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-200"
+                  >
+                    Next Step
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-200"
+                  >
+                    Create My Plan
+                  </button>
                 )}
               </div>
-            </div>
-
-            {/* Activity Level */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-3">
-                Activity Level
-              </label>
-              <div className="grid grid-cols-3 gap-4">
-                {["Low", "Moderate", "High"].map((lvl) => {
-                  const key = lvl.toLowerCase();
-                  return (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => handleChange("activityLevel", key)}
-                      className={`py-4 rounded-xl font-semibold transition-all ${
-                        formData.activityLevel === key
-                          ? "bg-red-500 text-white shadow"
-                          : "bg-gray-100 text-gray-700 hover:bg-red-100"
-                      }`}
-                    >
-                      {lvl}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="pt-6">
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-5 text-2xl font-semibold rounded-xl hover:shadow-xl transition-all duration-300"
-              >
-                Generate My Plan
-              </button>
-            </div>
-          </form>
+            </form>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      </section>
+    </Layout>
   );
-}
+};
+
+export default EnterDetails;
