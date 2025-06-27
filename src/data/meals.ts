@@ -467,8 +467,6 @@ export const meals = [
     "popular": true,
     "image": "https://i.ytimg.com/vi/LHXlMB002_Y/sddefault.jpg"
   },
-];
-export const meals = [
   // Breakfast meals
   {
     id: 1,
