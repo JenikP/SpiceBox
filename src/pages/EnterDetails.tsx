@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
+import { supabase } from "../utils/supabaseClient";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -17,17 +18,21 @@ const formSchema = z.object({
   currentWeight: z.number().min(30, "Weight must be at least 30kg").max(300, "Please enter a valid weight"),
   goalWeight: z.number().min(30, "Goal weight must be at least 30kg").max(300, "Please enter a valid goal weight"),
   activityLevel: z.enum(["sedentary", "lightly-active", "moderately-active", "very-active"]),
-  dietaryPreference: z.enum(["vegetarian", "non-vegetarian", "vegan", "pescatarian"]),
+  dietaryPreference: z.enum(["vegetarian", "non-vegetarian", "vegan", "no-preference"]),
   allergies: z.string().optional(),
   medicalConditions: z.string().optional(),
-  goal: z.enum(["weight-loss", "muscle-gain", "maintenance", "general-health"]),
-  timeline: z.enum(["1-month", "3-months", "6-months", "1-year"]),
+  goal: z.enum(["weight-loss", "maintenance"]),
+  timeline: z.number().min(1).max(52),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 const EnterDetails = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedGender, setSelectedGender] = useState<string>("");
+  const [selectedDietaryPreference, setSelectedDietaryPreference] = useState<string>("");
+  const [selectedGoal, setSelectedGoal] = useState<string>("");
+  const [timelineWeeks, setTimelineWeeks] = useState<number>(12);
   const totalSteps = 4;
   const navigate = useNavigate();
 
@@ -37,9 +42,44 @@ const EnterDetails = () => {
     watch,
     formState: { errors },
     trigger,
+    setValue,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      timeline: 12,
+    },
   });
+
+  // Pre-populate user data from authentication
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.error("Error getting user:", authError);
+        return;
+      }
+
+      // Get user profile data
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, phone, address")
+        .eq("id", user.id)
+        .single();
+
+      if (profile && !profileError) {
+        setValue("fullName", profile.full_name || "");
+        setValue("phone", profile.phone || "");
+      }
+
+      // Set email from auth user
+      if (user.email) {
+        setValue("email", user.email);
+      }
+    };
+
+    fetchUserData();
+  }, [setValue]);
 
   const nextStep = async () => {
     let fieldsToValidate: (keyof FormData)[] = [];
@@ -87,6 +127,26 @@ const EnterDetails = () => {
     "Lifestyle & Preferences",
     "Goals & Timeline"
   ];
+
+  const handleGenderSelect = (gender: string) => {
+    setSelectedGender(gender);
+    setValue("gender", gender as "male" | "female" | "other");
+  };
+
+  const handleDietaryPreferenceSelect = (preference: string) => {
+    setSelectedDietaryPreference(preference);
+    setValue("dietaryPreference", preference as "vegetarian" | "non-vegetarian" | "vegan" | "no-preference");
+  };
+
+  const handleGoalSelect = (goal: string) => {
+    setSelectedGoal(goal);
+    setValue("goal", goal as "weight-loss" | "maintenance");
+  };
+
+  const handleTimelineChange = (weeks: number) => {
+    setTimelineWeeks(weeks);
+    setValue("timeline", weeks);
+  };
 
   return (
     <Layout>
@@ -173,8 +233,9 @@ const EnterDetails = () => {
                     <input
                       {...register("fullName")}
                       type="text"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
                       placeholder="Enter your full name"
+                      readOnly
                     />
                     {errors.fullName && (
                       <p className="text-red-600 text-sm mt-1">{errors.fullName.message}</p>
@@ -188,8 +249,9 @@ const EnterDetails = () => {
                     <input
                       {...register("email")}
                       type="email"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
                       placeholder="Enter your email address"
+                      readOnly
                     />
                     {errors.email && (
                       <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
@@ -203,8 +265,9 @@ const EnterDetails = () => {
                     <input
                       {...register("phone")}
                       type="tel"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
                       placeholder="Enter your phone number"
+                      readOnly
                     />
                     {errors.phone && (
                       <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
@@ -228,6 +291,7 @@ const EnterDetails = () => {
                         max="100"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         placeholder="Enter your age"
+                        onWheel={(e) => e.currentTarget.blur()}
                       />
                       {errors.age && (
                         <p className="text-red-600 text-sm mt-1">{errors.age.message}</p>
@@ -238,15 +302,26 @@ const EnterDetails = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Gender *
                       </label>
-                      <select
-                        {...register("gender")}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      >
-                        <option value="">Select your gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { value: "male", label: "Male" },
+                          { value: "female", label: "Female" },
+                          { value: "other", label: "Other" }
+                        ].map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => handleGenderSelect(option.value)}
+                            className={`px-4 py-3 rounded-lg border-2 font-medium transition-all duration-200 ${
+                              selectedGender === option.value
+                                ? 'border-orange-500 bg-orange-50 text-orange-700'
+                                : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                       {errors.gender && (
                         <p className="text-red-600 text-sm mt-1">{errors.gender.message}</p>
                       )}
@@ -264,6 +339,7 @@ const EnterDetails = () => {
                       max="250"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       placeholder="Enter your height in centimeters"
+                      onWheel={(e) => e.currentTarget.blur()}
                     />
                     {errors.height && (
                       <p className="text-red-600 text-sm mt-1">{errors.height.message}</p>
@@ -283,6 +359,7 @@ const EnterDetails = () => {
                         step="0.1"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         placeholder="Enter current weight"
+                        onWheel={(e) => e.currentTarget.blur()}
                       />
                       {errors.currentWeight && (
                         <p className="text-red-600 text-sm mt-1">{errors.currentWeight.message}</p>
@@ -301,6 +378,7 @@ const EnterDetails = () => {
                         step="0.1"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         placeholder="Enter goal weight"
+                        onWheel={(e) => e.currentTarget.blur()}
                       />
                       {errors.goalWeight && (
                         <p className="text-red-600 text-sm mt-1">{errors.goalWeight.message}</p>
@@ -358,16 +436,27 @@ const EnterDetails = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Dietary Preference *
                     </label>
-                    <select
-                      {...register("dietaryPreference")}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    >
-                      <option value="">Select your dietary preference</option>
-                      <option value="vegetarian">Vegetarian</option>
-                      <option value="non-vegetarian">Non-Vegetarian</option>
-                      <option value="vegan">Vegan</option>
-                      <option value="pescatarian">Pescatarian</option>
-                    </select>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { value: "vegetarian", label: "Vegetarian" },
+                        { value: "non-vegetarian", label: "Non-Vegetarian" },
+                        { value: "vegan", label: "Vegan" },
+                        { value: "no-preference", label: "No Preference" }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => handleDietaryPreferenceSelect(option.value)}
+                          className={`px-4 py-3 rounded-lg border-2 font-medium transition-all duration-200 ${
+                            selectedDietaryPreference === option.value
+                              ? 'border-orange-500 bg-orange-50 text-orange-700'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                     {errors.dietaryPreference && (
                       <p className="text-red-600 text-sm mt-1">{errors.dietaryPreference.message}</p>
                     )}
@@ -409,22 +498,23 @@ const EnterDetails = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
                         { value: "weight-loss", label: "Weight Loss", icon: "⚖️" },
-                        { value: "muscle-gain", label: "Muscle Gain", icon: "💪" },
-                        { value: "maintenance", label: "Weight Maintenance", icon: "🎯" },
-                        { value: "general-health", label: "General Health", icon: "❤️" }
+                        { value: "maintenance", label: "Weight Maintenance", icon: "🎯" }
                       ].map((option) => (
-                        <label key={option.value} className="cursor-pointer">
-                          <input
-                            {...register("goal")}
-                            type="radio"
-                            value={option.value}
-                            className="sr-only"
-                          />
-                          <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-orange-300 transition-colors duration-200 peer-checked:border-orange-500 peer-checked:bg-orange-50">
-                            <div className="text-2xl mb-2">{option.icon}</div>
-                            <div className="font-medium text-gray-900">{option.label}</div>
-                          </div>
-                        </label>
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => handleGoalSelect(option.value)}
+                          className={`border-2 rounded-lg p-4 transition-all duration-200 ${
+                            selectedGoal === option.value
+                              ? 'border-orange-500 bg-orange-50 shadow-lg transform scale-105'
+                              : 'border-gray-200 hover:border-orange-300'
+                          }`}
+                        >
+                          <div className="text-2xl mb-2">{option.icon}</div>
+                          <div className={`font-medium ${
+                            selectedGoal === option.value ? 'text-orange-700' : 'text-gray-900'
+                          }`}>{option.label}</div>
+                        </button>
                       ))}
                     </div>
                     {errors.goal && (
@@ -434,18 +524,26 @@ const EnterDetails = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Timeline *
+                      Timeline: {timelineWeeks} weeks *
                     </label>
-                    <select
-                      {...register("timeline")}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    >
-                      <option value="">Select your timeline</option>
-                      <option value="1-month">1 Month</option>
-                      <option value="3-months">3 Months</option>
-                      <option value="6-months">6 Months</option>
-                      <option value="1-year">1 Year</option>
-                    </select>
+                    <div className="px-4">
+                      <input
+                        type="range"
+                        min="1"
+                        max="52"
+                        value={timelineWeeks}
+                        onChange={(e) => handleTimelineChange(parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${(timelineWeeks / 52) * 100}%, #e5e7eb ${(timelineWeeks / 52) * 100}%, #e5e7eb 100%)`
+                        }}
+                      />
+                      <div className="flex justify-between text-sm text-gray-600 mt-2">
+                        <span>1 week</span>
+                        <span>26 weeks</span>
+                        <span>52 weeks</span>
+                      </div>
+                    </div>
                     {errors.timeline && (
                       <p className="text-red-600 text-sm mt-1">{errors.timeline.message}</p>
                     )}
@@ -455,7 +553,7 @@ const EnterDetails = () => {
                     <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-2">Your Goal Summary</h4>
                       <p className="text-sm text-gray-700">
-                        Target: {Math.abs(currentWeight - goalWeight).toFixed(1)}kg {currentWeight > goalWeight ? 'weight loss' : 'weight gain'}
+                        Target: {Math.abs(currentWeight - goalWeight).toFixed(1)}kg {currentWeight > goalWeight ? 'weight loss' : 'weight gain'} over {timelineWeeks} weeks
                       </p>
                     </div>
                   )}
