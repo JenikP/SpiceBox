@@ -143,9 +143,55 @@ const EnterDetails = () => {
     setValue("goal", goal as "weight-loss" | "maintenance");
   };
 
+  // Calculate safe timeline range based on weight loss goal
+  const calculateSafeTimelineRange = () => {
+    const currentWeight = watch("currentWeight");
+    const goalWeight = watch("goalWeight");
+    
+    if (!currentWeight || !goalWeight || currentWeight <= goalWeight) {
+      return { min: 1, max: 52 };
+    }
+    
+    const weightToLose = currentWeight - goalWeight;
+    const maxWeeklyLoss = 0.8; // kg per week (safe maximum)
+    const minWeeklyLoss = 0.2; // kg per week (minimum for progress)
+    
+    const minWeeks = Math.ceil(weightToLose / maxWeeklyLoss);
+    const maxWeeks = Math.floor(weightToLose / minWeeklyLoss);
+    
+    return {
+      min: Math.max(minWeeks, 1),
+      max: Math.min(maxWeeks, 52)
+    };
+  };
+
   const handleTimelineChange = (weeks: number) => {
-    setTimelineWeeks(weeks);
-    setValue("timeline", weeks);
+    const safeRange = calculateSafeTimelineRange();
+    
+    // Ensure the selected timeline is within safe range
+    const safeWeeks = Math.max(safeRange.min, Math.min(weeks, safeRange.max));
+    
+    setTimelineWeeks(safeWeeks);
+    setValue("timeline", safeWeeks);
+  };
+
+  // Calculate weekly weight loss rate for display
+  const getWeeklyLossRate = () => {
+    const currentWeight = watch("currentWeight");
+    const goalWeight = watch("goalWeight");
+    
+    if (!currentWeight || !goalWeight || currentWeight <= goalWeight) {
+      return 0;
+    }
+    
+    const weightToLose = currentWeight - goalWeight;
+    return weightToLose / timelineWeeks;
+  };
+
+  // Check if current timeline is safe
+  const isTimelineSafe = () => {
+    const weeklyRate = getWeeklyLossRate();
+    return weeklyRate <= 0.8 && weeklyRate >= 0.2;
   };
 
   return (
@@ -526,23 +572,57 @@ const EnterDetails = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Timeline: {timelineWeeks} weeks *
                     </label>
-                    <div className="px-4">
-                      <input
-                        type="range"
-                        min="1"
-                        max="52"
-                        value={timelineWeeks}
-                        onChange={(e) => handleTimelineChange(parseInt(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                        style={{
-                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${(timelineWeeks / 52) * 100}%, #e5e7eb ${(timelineWeeks / 52) * 100}%, #e5e7eb 100%)`
-                        }}
-                      />
-                      <div className="flex justify-between text-sm text-gray-600 mt-2">
-                        <span>1 week</span>
-                        <span>26 weeks</span>
-                        <span>52 weeks</span>
+                    {currentWeight && goalWeight && currentWeight > goalWeight && (
+                      <div className="mb-4">
+                        <div className={`text-sm p-3 rounded-lg ${
+                          isTimelineSafe() 
+                            ? 'bg-green-50 text-green-700 border border-green-200' 
+                            : 'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
+                          <div className="flex items-center space-x-2">
+                            <span>{isTimelineSafe() ? '✅' : '⚠️'}</span>
+                            <span className="font-medium">
+                              Weekly loss rate: {getWeeklyLossRate().toFixed(2)}kg/week
+                            </span>
+                          </div>
+                          {!isTimelineSafe() && (
+                            <div className="mt-1 text-xs">
+                              Safe range: 0.2kg - 0.8kg per week. Adjust your timeline for safer results.
+                            </div>
+                          )}
+                        </div>
                       </div>
+                    )}
+                    <div className="px-4">
+                      {(() => {
+                        const safeRange = calculateSafeTimelineRange();
+                        const sliderMin = safeRange.min;
+                        const sliderMax = safeRange.max;
+                        const adjustedValue = Math.max(sliderMin, Math.min(timelineWeeks, sliderMax));
+                        
+                        return (
+                          <>
+                            <input
+                              type="range"
+                              min={sliderMin}
+                              max={sliderMax}
+                              value={adjustedValue}
+                              onChange={(e) => handleTimelineChange(parseInt(e.target.value))}
+                              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                              style={{
+                                background: `linear-gradient(to right, ${isTimelineSafe() ? '#10b981' : '#f97316'} 0%, ${isTimelineSafe() ? '#10b981' : '#f97316'} ${((adjustedValue - sliderMin) / (sliderMax - sliderMin)) * 100}%, #e5e7eb ${((adjustedValue - sliderMin) / (sliderMax - sliderMin)) * 100}%, #e5e7eb 100%)`
+                              }}
+                            />
+                            <div className="flex justify-between text-sm text-gray-600 mt-2">
+                              <span>{sliderMin} weeks</span>
+                              <span className="text-xs">
+                                {currentWeight && goalWeight && currentWeight > goalWeight ? 'Safe Range' : 'Timeline'}
+                              </span>
+                              <span>{sliderMax} weeks</span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                     {errors.timeline && (
                       <p className="text-red-600 text-sm mt-1">{errors.timeline.message}</p>
@@ -550,11 +630,30 @@ const EnterDetails = () => {
                   </div>
 
                   {currentWeight && goalWeight && (
-                    <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4">
+                    <div className={`rounded-lg p-4 ${
+                      isTimelineSafe() 
+                        ? 'bg-gradient-to-r from-green-50 to-emerald-50' 
+                        : 'bg-gradient-to-r from-red-50 to-orange-50'
+                    }`}>
                       <h4 className="font-medium text-gray-900 mb-2">Your Goal Summary</h4>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-gray-700 mb-2">
                         Target: {Math.abs(currentWeight - goalWeight).toFixed(1)}kg {currentWeight > goalWeight ? 'weight loss' : 'weight gain'} over {timelineWeeks} weeks
                       </p>
+                      {currentWeight > goalWeight && (
+                        <div className={`text-xs ${
+                          isTimelineSafe() ? 'text-green-700' : 'text-red-700'
+                        }`}>
+                          <div className="flex items-center space-x-1">
+                            <span>{isTimelineSafe() ? '✅' : '⚠️'}</span>
+                            <span>
+                              {isTimelineSafe() 
+                                ? 'This is a safe and sustainable weight loss plan' 
+                                : 'This timeline may be too aggressive - consider extending your goal period'
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
