@@ -22,26 +22,66 @@ const Home = () => {
     }
   ];
 
-  const testimonials = [
+  const steps = [
     {
-      name: "Priya S.",
-      location: "Melbourne",
-      quote: "Lost 8kg in 3 months while eating the most delicious Indian food. SpiceBox changed my life!",
-      rating: 5
+      step: "01",
+      title: "Choose Your Plan",
+      description: "Tell us your goals and we'll create a personalized meal plan"
     },
     {
-      name: "Rahul M.",
-      location: "Sydney",
-      quote: "Finally found healthy Indian meals that actually taste authentic. The convenience is unmatched.",
-      rating: 5
+      step: "02",
+      title: "Fresh Daily Delivery",
+      description: "Healthy Indian meals delivered fresh to your door every day"
     },
     {
-      name: "Anjali K.",
-      location: "Brisbane",
-      quote: "As a busy professional, SpiceBox saves me time while keeping me healthy and satisfied.",
-      rating: 5
+      step: "03",
+      title: "See Real Results",
+      description: "Follow the plan and watch the transformation happen"
     }
   ];
+
+  const testimonials = [
+    {
+      name: "Priya Sharma",
+      location: "Melbourne",
+      text: "Lost 8kg in 12 weeks! Finally found Indian food that helps me lose weight instead of gaining it.",
+      rating: 5
+    },
+    {
+      name: "Raj Patel",
+      location: "Melbourne",
+      text: "The flavours are incredible. I don't feel like I'm on a diet at all. Down 12kg and counting!",
+      rating: 5
+    },
+    {
+      name: "Abdulla Khan",
+      location: "Melbourne",
+      text: "SpiceFit changed my relationship with food. Healthy Indian meals that actually taste amazing.",
+      rating: 4.5
+    }
+  ];
+
+  const featuredMeals = [
+    {
+      name: "Protein Dal Bowl",
+      calories: "320 kcal",
+      protein: "22g protein",
+      image: "https://images.pexels.com/photos/6544379/pexels-photo-6544379.jpeg?auto=compress&cs=tinysrgb&h=350"
+    },
+    {
+      name: "Spiced Lentil Curry",
+      calories: "285 kcal",
+      protein: "18g protein",
+      image: "https://images.pexels.com/photos/20004800/pexels-photo-20004800.jpeg?auto=compress&cs=tinysrgb&h=350"
+    },
+    {
+      name: "Turmeric Rice Bowl",
+      calories: "340 kcal",
+      protein: "15g protein",
+      image: "https://images.pexels.com/photos/28674705/pexels-photo-28674705.jpeg?auto=compress&cs=tinysrgb&h=350"
+    }
+  ];
+
 
   return (
     <Layout>
@@ -159,31 +199,101 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-gradient-to-r from-orange-500 to-red-500">
+      {/* How It Works Preview */}
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
-            {[
-              { number: "10,000+", label: "Happy Customers" },
-              { number: "50,000+", label: "Meals Delivered" },
-              { number: "15kg", label: "Average Weight Loss" },
-              { number: "4.9/5", label: "Customer Rating" }
-            ].map((stat, index) => (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
+            <p className="text-xl text-gray-600">Simple steps to transform your health</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {steps.map((step, index) => (
               <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
+                key={step.step}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+                className="text-center"
               >
-                <div className="text-3xl md:text-4xl font-bold mb-2">{stat.number}</div>
-                <div className="text-orange-100">{stat.label}</div>
+                <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6">
+                  {step.step}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{step.title}</h3>
+                <p className="text-gray-600">{step.description}</p>
               </motion.div>
             ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link
+              to="/how-it-works"
+              className="inline-block bg-white text-orange-600 px-8 py-3 rounded-full font-semibold border-2 border-orange-600 hover:bg-orange-600 hover:text-white transition-all duration-300"
+            >
+              Learn More
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* What's Cooking Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">What's Cooking?</h2>
+            <p className="text-xl text-gray-600">Featured meals crafted for your goals</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredMeals.map((meal, index) => (
+              <motion.div
+                key={meal.name}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow group"
+              >
+                <div className="relative overflow-hidden">
+                  <img
+                    src={meal.image}
+                    alt={meal.name}
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className="absolute top-4 right-4 bg-white rounded-full px-3 py-1 text-sm font-semibold text-orange-600">
+                    {meal.calories}
+                  </div>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{meal.name}</h3>
+                  <p className="text-gray-600 mb-4">{meal.protein}</p>
+                  <button className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300">
+                    Add to Plan
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link
+              to="/meals"
+              className="inline-block bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-3 rounded-full font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300"
+            >
+              View All Meals
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Carousel */}
       <section className="py-20 bg-gradient-to-br from-orange-50 to-red-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -191,54 +301,77 @@ const Home = () => {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              What Our Customers Say
-            </h2>
-            <p className="text-xl text-gray-600">Real stories from real people who transformed their health with SpiceBox</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Success Stories</h2>
+            <p className="text-xl text-gray-600">Real results from real people</p>
           </motion.div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <motion.div
                 key={testimonial.name}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.2 }}
-                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300"
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="bg-white rounded-2xl p-8 shadow-lg"
               >
                 <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
+                  {Array.from({ length: Math.floor(testimonial.rating) }).map((_, i) => (
                     <svg key={i} className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
+                    
                   ))}
+
+                  {testimonial.rating % 1 !== 0 && (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      className="w-6 h-6 text-orange-500"
+                    >
+                      <defs>
+                        <linearGradient id="half-grad">
+                          <stop offset="50%" stopColor="currentColor" />
+                          <stop offset="50%" stopColor="lightgray" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        fill="url(#half-grad)"
+                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                      />
+                    </svg>
+                  )}
                 </div>
-                <p className="text-gray-600 mb-4 italic">"{testimonial.quote}"</p>
-                <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                <div className="text-sm text-gray-500">{testimonial.location}</div>
+
+                <p className="text-gray-600 mb-6 italic">"{testimonial.text}"</p>
+                <div>
+                  <div className="font-bold text-gray-900">{testimonial.name}</div>
+                  <div className="text-gray-500 text-sm">{testimonial.location}</div>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
+
       {/* CTA Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-gradient-to-r from-orange-500 to-red-500">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl font-bold text-white mb-6">
               Ready to Transform Your Health?
             </h2>
-            <p className="text-xl text-gray-600 mb-8">
-              Join thousands of satisfied customers who've achieved their weight loss goals with SpiceBox
+            <p className="text-xl text-orange-100 mb-8">
+              Join thousands of Indian Australians who've already started their journey
             </p>
             <Link
               to="/enter-details"
-              className="inline-block bg-gradient-to-r from-orange-500 to-red-500 text-white px-12 py-4 rounded-full font-bold text-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-xl"
+              className="inline-block bg-white text-orange-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-xl"
             >
-              Get Started Today
+              Start Your Plan Today
             </Link>
           </motion.div>
         </div>

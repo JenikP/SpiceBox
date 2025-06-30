@@ -177,7 +177,7 @@ export default function FinalizeMeals() {
       console.log("✅ Meals saved successfully!", data);
     }
 
-    navigate("/plan");
+    navigate("/checkout");
   };
 
   const currentMeals = weeklyMeals[activeDay] || {};

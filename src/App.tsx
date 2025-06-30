@@ -14,6 +14,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
+import Pricing from "./pages/Pricing";
 
 function App() {
   return (
@@ -58,6 +59,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pricing"
+            element={
+              <ProtectedRoute>
+                <Pricing />
               </ProtectedRoute>
             }
           />

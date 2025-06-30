@@ -21,7 +21,7 @@ const formSchema = z.object({
   dietaryPreference: z.enum(["vegetarian", "non-vegetarian", "vegan", "no-preference"]),
   allergies: z.string().optional(),
   medicalConditions: z.string().optional(),
-  goal: z.enum(["weight-loss", "maintenance"]),
+  goal: z.enum(["weight-loss"]),
   timeline: z.number().min(1).max(52),
 });
 
@@ -140,7 +140,7 @@ const EnterDetails = () => {
 
   const handleGoalSelect = (goal: string) => {
     setSelectedGoal(goal);
-    setValue("goal", goal as "weight-loss" | "maintenance");
+    setValue("goal", goal as "weight-loss");
   };
 
   // Calculate safe timeline range based on weight loss goal
@@ -544,7 +544,7 @@ const EnterDetails = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
                         { value: "weight-loss", label: "Weight Loss", icon: "⚖️" },
-                        { value: "maintenance", label: "Weight Maintenance", icon: "🎯" }
+                        
                       ].map((option) => (
                         <button
                           key={option.value}

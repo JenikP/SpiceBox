@@ -3,8 +3,9 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 
-const Plan = () => {
+const Pricing = () => {
   const [billingCycle, setBillingCycle] = useState<"weekly" | "monthly">("weekly");
+
 
   const plans = [
   {
@@ -114,14 +115,14 @@ const Plan = () => {
     },
     {
       name: "Rahul M.",
-      location: "Sydney", 
+      location: "Melbourne", 
       plan: "Transformation Plan",
       quote: "The nutritionist consultations were game-changing. Finally found a sustainable way to eat healthy.",
       rating: 5
     },
     {
       name: "Anjali K.",
-      location: "Brisbane",
+      location: "Melbourne",
       plan: "Essential Plan",
       quote: "Perfect for my busy lifestyle. Authentic flavors without the guilt or cooking time.",
       rating: 5
@@ -262,7 +263,7 @@ const Plan = () => {
                   </ul>
 
                   <Link
-                    to="/enter-details"
+                    to="/checkout"
                     className={`w-full block text-center py-4 px-6 rounded-lg font-bold text-lg transition-all duration-200 ${
                       plan.recommended
                         ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg'
@@ -383,4 +384,4 @@ const Plan = () => {
   );
 };
 
-export default Plan;
+export default Pricing;
