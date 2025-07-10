@@ -20,7 +20,9 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-app.post("/api/create-payment-intent", createPaymentIntentHandler);
+app.post("/api/create-payment-intent", (req, res) => {
+  createPaymentIntentHandler(req, res);
+});
 app.use(express.static("dist"));
 
 // Create checkout session endpoint

@@ -23,27 +23,51 @@ const Pricing = () => {
         return;
       }
 
-      // Save the selected plan to the database
-      const { error } = await supabase
+      const planData = {
+        user_id: user.id,
+        plan_id: selectedPlan.id,
+        plan_name: selectedPlan.name,
+        plan_price: billingCycle === "weekly" 
+          ? (selectedPlan.weeklyPrice || selectedPlan.weeklyprice || 0)
+          : (selectedPlan.monthlyPrice || selectedPlan.monthlyprice || 0),
+        billing_cycle: billingCycle,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Try to update first, if not exists then insert
+      const { data: existingPlan } = await supabase
         .from("user_plan_selections")
-        .upsert({
-          user_id: user.id,
-          plan_id: selectedPlan.id,
-          plan_name: selectedPlan.name,
-          plan_price: billingCycle === "weekly" 
-            ? (selectedPlan.weeklyPrice || selectedPlan.weeklyprice || 0)
-            : (selectedPlan.monthlyPrice || selectedPlan.monthlyprice || 0),
-          billing_cycle: billingCycle,
-        });
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      let error;
+      if (existingPlan) {
+        // Update existing plan
+        const { error: updateError } = await supabase
+          .from("user_plan_selections")
+          .update(planData)
+          .eq("user_id", user.id);
+        error = updateError;
+      } else {
+        // Insert new plan
+        const { error: insertError } = await supabase
+          .from("user_plan_selections")
+          .insert(planData);
+        error = insertError;
+      }
 
       if (error) {
         console.error("Error saving plan selection:", error);
+        alert("Failed to save plan selection. Please try again.");
+        return;
       }
 
       // Navigate to checkout
       window.location.href = "/checkout";
     } catch (error) {
       console.error("Error handling plan selection:", error);
+      alert("An error occurred. Please try again.");
     }
   };
 

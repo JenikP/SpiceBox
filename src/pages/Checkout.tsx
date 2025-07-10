@@ -1,3 +1,4 @@
+
 // src/pages/Checkout.tsx
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -18,7 +19,7 @@ import { loadStripe } from "@stripe/stripe-js";
 // Always use VITE_STRIPE_PUBLISHABLE_KEY
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-// Validation schema for email
+// Validation schema for email and special instructions
 const checkoutSchema = z.object({
   specialInstructions: z.string().optional(),
   email: z.string().email("Please enter a valid email address"),
@@ -29,9 +30,11 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 function PaymentFormContent({
   pricing,
   userProfile,
+  specialInstructions,
 }: {
   pricing: any;
   userProfile: any;
+  specialInstructions: string;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -45,12 +48,16 @@ function PaymentFormContent({
     setValue,
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { email: userProfile?.email || "" },
+    defaultValues: { 
+      email: userProfile?.email || "",
+      specialInstructions: specialInstructions || ""
+    },
   });
 
   useEffect(() => {
     if (userProfile?.email) setValue("email", userProfile.email);
-  }, [userProfile, setValue]);
+    setValue("specialInstructions", specialInstructions);
+  }, [userProfile, specialInstructions, setValue]);
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (!stripe || !elements) {
@@ -123,9 +130,11 @@ export default function Checkout() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [selectedMeals, setSelectedMeals] = useState<any[]>([]);
   const [mealPlan, setMealPlan] = useState<any>(null);
+  const [userPlanSelection, setUserPlanSelection] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [clientSecret, setClientSecret] = useState<string>("");
   const [clientSecretError, setClientSecretError] = useState<string>("");
+  const [specialInstructions, setSpecialInstructions] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -138,6 +147,7 @@ export default function Checkout() {
           navigate("/auth");
           return;
         }
+
         // Get user profile
         const { data: profile } = await supabase
           .from("profiles")
@@ -145,6 +155,17 @@ export default function Checkout() {
           .eq("id", authUser.id)
           .single();
         setUserProfile(profile);
+
+        // Get user plan selection from database
+        const { data: planSelection, error: planError } = await supabase
+          .from("user_plan_selections")
+          .select("*")
+          .eq("user_id", authUser.id)
+          .single();
+
+        if (planSelection && !planError) {
+          setUserPlanSelection(planSelection);
+        }
 
         // Get weekly meals
         const { data: weeklyMeals } = await supabase
@@ -158,6 +179,7 @@ export default function Checkout() {
           });
           setSelectedMeals(mealsWithDetails);
         }
+
         // Get meal plan
         const { data: plan } = await supabase
           .from("meal_plans")
@@ -166,19 +188,19 @@ export default function Checkout() {
           .single();
         setMealPlan(plan);
 
-        // Calculate pricing
-        const pricing = calculatePricing(selectedPlan, plan);
+        // Calculate pricing using database plan selection
+        const pricing = calculatePricing(planSelection || selectedPlan, plan);
 
         // Fetch payment intent clientSecret
-        const planToUse = selectedPlan || plan || { name: "Custom Plan", id: "custom" };
+        const planToUse = planSelection || selectedPlan || plan || { name: "Custom Plan", id: "custom" };
 
         const response = await fetch("/api/create-payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            planName: planToUse?.name,
+            planName: planToUse?.plan_name || planToUse?.name,
             amount: Math.round((pricing?.total || 50) * 100),
-            planId: planToUse?.id,
+            planId: planToUse?.plan_id || planToUse?.id,
             customerEmail: profile?.email,
             userId: authUser.id,
             mealCount: weeklyMeals?.length || 0,
@@ -197,7 +219,7 @@ export default function Checkout() {
           }
         } else {
           setClientSecretError(`Failed to fetch payment intent: ${response.status}`);
-          console.error("Failed to fetch payment intent:", response.status);
+          console.error("Failed to fetch payment intent:", response.status, response.statusText);
         }
       } catch (error) {
         setClientSecretError("Error occurred in fetchData: " + error.message);
@@ -217,9 +239,17 @@ export default function Checkout() {
     return { averageDailyKJ, weeklyProtein, totalKJ };
   };
 
-  const calculatePricing = (selectedPlan?: any, mealPlan?: any) => {
+  const calculatePricing = (planData?: any, mealPlan?: any) => {
     let basePrice, subtotal, total;
-    if (selectedPlan) {
+    
+    // Use database plan selection first, then fallback to other sources
+    if (planData && planData.plan_price) {
+      basePrice = Number(planData.plan_price);
+      subtotal = basePrice;
+      const discount = basePrice * 0.15;
+      total = subtotal - discount;
+      return { basePrice, discount, subtotal, total };
+    } else if (selectedPlan) {
       basePrice =
         selectedPlan.price ||
         selectedPlan.weeklyPrice ||
@@ -245,7 +275,7 @@ export default function Checkout() {
   };
 
   const nutrition = calculateNutrition();
-  const pricing = calculatePricing(selectedPlan, mealPlan);
+  const pricing = calculatePricing(userPlanSelection, mealPlan);
   const startDate = new Date();
   startDate.setDate(startDate.getDate() + 1);
 
@@ -287,14 +317,29 @@ export default function Checkout() {
                   </svg>
                   Delivery Address
                 </h2>
-                <div className="space-y-2 text-gray-600">
+                <div className="space-y-2 text-gray-600 mb-4">
                   <p className="font-semibold">
                     {userProfile?.full_name || "Name not provided"}
                   </p>
                   <p>{userProfile?.address || "Address not provided"}</p>
                   <p>{userProfile?.phone || "Phone not provided"}</p>
                 </div>
+                
+                {/* Special Instructions in Delivery Section */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Special Delivery Instructions (Optional)
+                  </label>
+                  <textarea
+                    value={specialInstructions}
+                    onChange={(e) => setSpecialInstructions(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Any special instructions for delivery (e.g., gate code, preferred delivery time, etc.)"
+                  />
+                </div>
               </div>
+
               {/* Meal Summary */}
               <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
@@ -309,9 +354,9 @@ export default function Checkout() {
                 </h2>
                 {selectedMeals.length > 0 ? (
                   <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
-                    {selectedMeals.slice(0, 6).map((meal) => (
+                    {selectedMeals.slice(0, 6).map((meal, index) => (
                       <div
-                        key={meal.id}
+                        key={`meal-${meal.id}-${index}`}
                         className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
                       >
                         <img
@@ -347,6 +392,7 @@ export default function Checkout() {
                   </div>
                 )}
               </div>
+              
               {/* Nutrition Summary */}
               <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -368,6 +414,7 @@ export default function Checkout() {
                 </div>
               </div>
             </div>
+            
             {/* RIGHT */}
             <div className="space-y-6">
               {/* Order Summary */}
@@ -378,8 +425,8 @@ export default function Checkout() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">
-                      {selectedPlan?.name || mealPlan?.name || "Custom Plan"} (
-                      {selectedPlan?.duration || mealPlan?.duration || "1 week"}
+                      {userPlanSelection?.plan_name || selectedPlan?.name || mealPlan?.name || "Custom Plan"} (
+                      {userPlanSelection?.billing_cycle || selectedPlan?.duration || mealPlan?.duration || "1 week"}
                       )
                     </span>
                     <span>${pricing?.subtotal?.toFixed(2) || "50.00"}</span>
@@ -403,6 +450,7 @@ export default function Checkout() {
                   </p>
                 </div>
               </div>
+              
               {/* Payment Section */}
               <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
@@ -433,6 +481,7 @@ export default function Checkout() {
                     <PaymentFormContent
                       pricing={pricing}
                       userProfile={userProfile}
+                      specialInstructions={specialInstructions}
                     />
                   </Elements>
                 ) : clientSecretError ? (

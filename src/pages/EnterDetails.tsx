@@ -12,17 +12,29 @@ const formSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Please enter a valid email"),
   phone: z.string().min(10, "Please enter a valid phone number"),
+  goal: z.enum(["weight-loss", "maintain-weight"]),
   age: z.number().min(18, "You must be at least 18 years old").max(100, "Please enter a valid age"),
   gender: z.enum(["male", "female", "other"]),
   height: z.number().min(120, "Height must be at least 120cm").max(250, "Please enter a valid height"),
   currentWeight: z.number().min(30, "Weight must be at least 30kg").max(300, "Please enter a valid weight"),
   goalWeight: z.number().min(30, "Goal weight must be at least 30kg").max(300, "Please enter a valid goal weight"),
-  activityLevel: z.enum(["sedentary", "lightly-active", "moderately-active", "very-active"]),
   dietaryPreference: z.enum(["vegetarian", "non-vegetarian", "vegan", "no-preference"]),
   allergies: z.string().optional(),
   medicalConditions: z.string().optional(),
-  goal: z.enum(["weight-loss"]),
+  activityLevel: z.enum(["sedentary", "lightly-active", "moderately-active", "very-active"]),
   timeline: z.number().min(1).max(52),
+}).refine((data) => {
+  if (data.goal === "weight-loss") {
+    const weightDifference = data.currentWeight - data.goalWeight;
+    return weightDifference >= 2;
+  }
+  if (data.goal === "maintain-weight") {
+    return Math.abs(data.currentWeight - data.goalWeight) <= 1;
+  }
+  return true;
+}, {
+  message: "For weight loss, you must lose at least 2kg. For maintenance, goal weight should be within 1kg of current weight.",
+  path: ["goalWeight"]
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -31,9 +43,9 @@ const EnterDetails = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedGender, setSelectedGender] = useState<string>("");
   const [selectedDietaryPreference, setSelectedDietaryPreference] = useState<string>("");
-  const [selectedGoal, setSelectedGoal] = useState<string>("weight-loss");
+  const [selectedGoal, setSelectedGoal] = useState<string>("");
   const [timelineWeeks, setTimelineWeeks] = useState<number>(12);
-  const totalSteps = 4;
+  const totalSteps = 5; // Updated to 5 steps
   const navigate = useNavigate();
 
   const {
@@ -47,7 +59,6 @@ const EnterDetails = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       timeline: 12,
-      goal: "weight-loss",
     },
   });
 
@@ -96,6 +107,9 @@ const EnterDetails = () => {
 
         setValue("activityLevel", existingDetails.activity_level as "sedentary" | "lightly-active" | "moderately-active" | "very-active");
 
+        setSelectedGoal(existingDetails.goal || "");
+        setValue("goal", existingDetails.goal as "weight-loss" | "maintain-weight");
+
         // Handle allergies and medical conditions
         if (existingDetails.allergies && existingDetails.allergies !== "" && existingDetails.allergies !== "na") {
           setHasAllergies(true);
@@ -139,13 +153,16 @@ const EnterDetails = () => {
         fieldsToValidate = ["fullName", "email", "phone"];
         break;
       case 2:
-        fieldsToValidate = ["age", "gender", "height", "currentWeight", "goalWeight"];
+        fieldsToValidate = ["goal"];
         break;
       case 3:
-        fieldsToValidate = ["activityLevel", "dietaryPreference"];
+        fieldsToValidate = ["age", "gender", "height", "currentWeight", "goalWeight"];
         break;
       case 4:
-        fieldsToValidate = ["goal", "timeline"];
+        fieldsToValidate = ["dietaryPreference"];
+        break;
+      case 5:
+        fieldsToValidate = ["activityLevel", "timeline"];
         break;
     }
 
@@ -248,13 +265,15 @@ const EnterDetails = () => {
 
   const currentWeight = watch("currentWeight");
   const goalWeight = watch("goalWeight");
+  const goal = watch("goal");
   const bmi = currentWeight && watch("height") ? (currentWeight / Math.pow(watch("height") / 100, 2)).toFixed(1) : null;
 
   const stepTitles = [
     "Personal Information",
+    "Your Goal",
     "Physical Details",
     "Lifestyle & Preferences",
-    "Goals & Timeline"
+    "Activity & Timeline"
   ];
 
   const handleGenderSelect = (gender: string) => {
@@ -269,13 +288,23 @@ const EnterDetails = () => {
 
   const handleGoalSelect = (goal: string) => {
     setSelectedGoal(goal);
-    setValue("goal", goal as "weight-loss");
+    setValue("goal", goal as "weight-loss" | "maintain-weight");
+    
+    // Auto-adjust goal weight for maintain weight
+    if (goal === "maintain-weight" && currentWeight) {
+      setValue("goalWeight", currentWeight);
+    }
   };
 
   // Calculate safe timeline range based on weight loss goal
   const calculateSafeTimelineRange = () => {
     const currentWeight = watch("currentWeight");
     const goalWeight = watch("goalWeight");
+    const goal = watch("goal");
+
+    if (goal === "maintain-weight") {
+      return { min: 1, max: 52 };
+    }
 
     if (!currentWeight || !goalWeight || currentWeight <= goalWeight) {
       return { min: 1, max: 52 };
@@ -308,6 +337,11 @@ const EnterDetails = () => {
   const getWeeklyLossRate = () => {
     const currentWeight = watch("currentWeight");
     const goalWeight = watch("goalWeight");
+    const goal = watch("goal");
+
+    if (goal === "maintain-weight") {
+      return 0;
+    }
 
     if (!currentWeight || !goalWeight || currentWeight <= goalWeight) {
       return 0;
@@ -354,6 +388,10 @@ const EnterDetails = () => {
 
     // Calculate TDEE (Total Daily Energy Expenditure)
     const tdee = bmr * activityMultipliers[activityLevel];
+
+    if (goal === "maintain-weight") {
+      return Math.round(tdee);
+    }
 
     if (goal === "weight-loss" && currentWeight > goalWeight) {
       // Calculate deficit needed based on timeline
@@ -430,6 +468,28 @@ const EnterDetails = () => {
     setDailyCalories(newDailyCalories);
   }, [timelineWeeks]);
 
+  // Validation for goal weight based on selected goal
+  const getGoalWeightValidation = () => {
+    const goal = watch("goal");
+    const currentWeight = watch("currentWeight");
+    
+    if (!goal || !currentWeight) return null;
+    
+    if (goal === "weight-loss") {
+      const weightDifference = currentWeight - goalWeight;
+      if (weightDifference < 2) {
+        return "For weight loss, you must lose at least 2kg";
+      }
+    } else if (goal === "maintain-weight") {
+      const weightDifference = Math.abs(currentWeight - goalWeight);
+      if (weightDifference > 1) {
+        return "For weight maintenance, goal weight should be within 1kg of current weight";
+      }
+    }
+    
+    return null;
+  };
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -482,18 +542,21 @@ const EnterDetails = () => {
             <div className="flex items-center justify-between mb-4">
               {Array.from({ length: totalSteps }, (_, i) => (
                 <div key={i} className="flex items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                  <motion.div
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: i + 1 <= currentStep ? 1.1 : 1 }}
+                    transition={{ duration: 0.3 }}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm ${
                       i + 1 <= currentStep
-                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
                         : 'bg-gray-200 text-gray-600'
                     }`}
                   >
                     {i + 1}
-                  </div>
+                  </motion.div>
                   {i < totalSteps - 1 && (
                     <div
-                      className={`flex-1 h-1 mx-4 ${
+                      className={`flex-1 h-2 mx-4 rounded-full transition-all duration-500 ${
                         i + 1 < currentStep
                           ? 'bg-gradient-to-r from-orange-500 to-red-500'
                           : 'bg-gray-200'
@@ -523,13 +586,17 @@ const EnterDetails = () => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.4 }}
             className="bg-white rounded-2xl shadow-xl p-8"
           >
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Step 1: Personal Information */}
               {currentStep === 1 && (
-                <div className="space-y-6">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Full Name *
@@ -577,12 +644,61 @@ const EnterDetails = () => {
                       <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
                     )}
                   </div>
-                </div>
+                </motion.div>
               )}
 
-              {/* Step 2: Physical Details */}
+              {/* Step 2: Your Goal */}
               {currentStep === 2 && (
-                <div className="space-y-6">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-4">
+                      What's your primary goal? *
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { value: "weight-loss", label: "Weight Loss", icon: "⚖️", desc: "Lose weight healthily" },
+                        { value: "maintain-weight", label: "Maintain Weight", icon: "🎯", desc: "Stay at current weight" },
+                      ].map((option) => (
+                        <motion.button
+                          key={option.value}
+                          type="button"
+                          onClick={() => handleGoalSelect(option.value)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`border-2 rounded-xl p-6 transition-all duration-300 ${
+                            selectedGoal === option.value
+                              ? 'border-orange-500 bg-orange-50 shadow-lg transform scale-105'
+                              : 'border-gray-200 hover:border-orange-300 hover:shadow-md'
+                          }`}
+                        >
+                          <div className="text-3xl mb-3">{option.icon}</div>
+                          <div className={`font-bold text-lg mb-2 ${
+                            selectedGoal === option.value ? 'text-orange-700' : 'text-gray-900'
+                          }`}>{option.label}</div>
+                          <div className={`text-sm ${
+                            selectedGoal === option.value ? 'text-orange-600' : 'text-gray-600'
+                          }`}>{option.desc}</div>
+                        </motion.button>
+                      ))}
+                    </div>
+                    {errors.goal && (
+                      <p className="text-red-600 text-sm mt-1">{errors.goal.message}</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 3: Physical Details */}
+              {currentStep === 3 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -683,9 +799,13 @@ const EnterDetails = () => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         placeholder="Enter goal weight"
                         onWheel={(e) => e.currentTarget.blur()}
+                        disabled={goal === "maintain-weight"}
                       />
                       {errors.goalWeight && (
                         <p className="text-red-600 text-sm mt-1">{errors.goalWeight.message}</p>
+                      )}
+                      {getGoalWeightValidation() && (
+                        <p className="text-red-600 text-sm mt-1">{getGoalWeightValidation()}</p>
                       )}
                     </div>
                   </div>
@@ -705,42 +825,16 @@ const EnterDetails = () => {
                       )}
                     </div>
                   )}
-                </div>
+                </motion.div>
               )}
 
-              {/* Step 3: Lifestyle & Preferences */}
-              {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Activity Level *
-                    </label>
-                    <div className="space-y-3">
-                      {[
-                        { value: "sedentary", label: "Sedentary", desc: "Little to no exercise" },
-                        { value: "lightly-active", label: "Lightly Active", desc: "Light exercise 1-3 days/week" },
-                        { value: "moderately-active", label: "Moderately Active", desc: "Moderate exercise 3-5 days/week" },
-                        { value: "very-active", label: "Very Active", desc: "Heavy exercise 6-7 days/week" }
-                      ].map((option) => (
-                        <label key={option.value} className="flex items-start space-x-3 cursor-pointer">
-                          <input
-                            {...register("activityLevel")}
-                            type="radio"
-                            value={option.value}
-                            className="mt-1 text-orange-500 focus:ring-orange-500"
-                          />
-                          <div>
-                            <div className="font-medium text-gray-900">{option.label}</div>
-                            <div className="text-sm text-gray-600">{option.desc}</div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                    {errors.activityLevel && (
-                      <p className="text-red-600 text-sm mt-1">{errors.activityLevel.message}</p>
-                    )}
-                  </div>
-
+              {/* Step 4: Lifestyle & Preferences */}
+              {currentStep === 4 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Dietary Preference *
@@ -752,10 +846,12 @@ const EnterDetails = () => {
                         { value: "vegan", label: "Vegan" },
                         { value: "no-preference", label: "No Preference" }
                       ].map((option) => (
-                        <button
+                        <motion.button
                           key={option.value}
                           type="button"
                           onClick={() => handleDietaryPreferenceSelect(option.value)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           className={`px-4 py-3 rounded-lg border-2 font-medium transition-all duration-200 ${
                             selectedDietaryPreference === option.value
                               ? 'border-orange-500 bg-orange-50 text-orange-700'
@@ -763,7 +859,7 @@ const EnterDetails = () => {
                           }`}
                         >
                           {option.label}
-                        </button>
+                        </motion.button>
                       ))}
                     </div>
                     {errors.dietaryPreference && (
@@ -860,154 +956,123 @@ const EnterDetails = () => {
                       </div>
                     )}
                   </div>
+                </motion.div>
+              )}
+
+              {/* Step 5: Activity & Timeline */}
+              {currentStep === 5 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Activity Level *
+                    </label>
+                    <div className="space-y-3">
+                      {[
+                        { value: "sedentary", label: "Sedentary", desc: "Little to no exercise" },
+                        { value: "lightly-active", label: "Lightly Active", desc: "Light exercise 1-3 days/week" },
+                        { value: "moderately-active", label: "Moderately Active", desc: "Moderate exercise 3-5 days/week" },
+                        { value: "very-active", label: "Very Active", desc: "Heavy exercise 6-7 days/week" }
+                      ].map((option) => (
+                        <label key={option.value} className="flex items-start space-x-3 cursor-pointer">
+                          <input
+                            {...register("activityLevel")}
+                            type="radio"
+                            value={option.value}
+                            className="mt-1 text-orange-500 focus:ring-orange-500"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">{option.label}</div>
+                            <div className="text-sm text-gray-600">{option.desc}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    {errors.activityLevel && (
+                      <p className="text-red-600 text-sm mt-1">{errors.activityLevel.message}</p>
+                    )}
+                  </div>
+
+                  {goal !== "maintain-weight" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Timeline: {timelineWeeks} weeks *
+                      </label>
+                      {currentWeight && goalWeight && currentWeight > goalWeight && (
+                        <div className="mb-4">
+                          <div className={`text-sm p-3 rounded-lg ${
+                            isTimelineSafe() 
+                              ? 'bg-green-50 text-green-700 border border-green-200' 
+                              : 'bg-red-50 text-red-700 border border-red-200'
+                          }`}>
+                            <div className="flex items-center space-x-2">
+                              <span>{isTimelineSafe() ? '✅' : '⚠️'}</span>
+                              <span className="font-medium">
+                                Weekly loss rate: {getWeeklyLossRate().toFixed(2)}kg/week
+                              </span>
+                            </div>
+                            {!isTimelineSafe() && (
+                              <div className="mt-1 text-xs">
+                                Safe range: 0.2kg - 0.8kg per week. Adjust your timeline for safer results.
+                              </div>
+                            )}
+                            {dailyCalories > 0 && (
+                              <div className="mt-2 text-xs font-medium">
+                                📊 Daily calories adjusted to: {dailyCalories} kJ for this timeline
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div className="px-4">
+                        {(() => {
+                          const safeRange = calculateSafeTimelineRange();
+                          const sliderMin = safeRange.min;
+                          const sliderMax = safeRange.max;
+                          const adjustedValue = Math.max(sliderMin, Math.min(timelineWeeks, sliderMax));
+
+                          return (
+                            <>
+                              <input
+                                type="range"
+                                min={sliderMin}
+                                max={sliderMax}
+                                value={adjustedValue}
+                                onChange={(e) => handleTimelineChange(parseInt(e.target.value))}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                style={{
+                                  background: `linear-gradient(to right, ${isTimelineSafe() ? '#10b981' : '#f97316'} 0%, ${isTimelineSafe() ? '#10b981' : '#f97316'} ${((adjustedValue - sliderMin) / (sliderMax - sliderMin)) * 100}%, #e5e7eb ${((adjustedValue - sliderMin) / (sliderMax - sliderMin)) * 100}%, #e5e7eb 100%)`
+                                }}
+                              />
+                              <div className="flex justify-between text-sm text-gray-600 mt-2">
+                                <span>{sliderMin} weeks</span>
+                                <span className="text-xs">Safe Range</span>
+                                <span>{sliderMax} weeks</span>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      {errors.timeline && (
+                        <p className="text-red-600 text-sm mt-1">{errors.timeline.message}</p>
+                      )}
+                    </div>
+                  )}
 
                   {dailyCalories > 0 && (
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
                       <p className="text-sm text-blue-700">
-                        <strong>Updated Daily Calorie Target:</strong> {dailyCalories} kJ
+                        <strong>Final Daily Calorie Target:</strong> {dailyCalories} kJ
                       </p>
                       <p className="text-xs text-blue-600 mt-1">
-                        This target is calculated based on your physical details and activity level
+                        This target is calculated based on all your details and {goal === "maintain-weight" ? "maintenance goal" : "weight loss timeline"}
                       </p>
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* Step 4: Goals & Timeline */}
-              {currentStep === 4 && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Primary Goal *
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[
-                        { value: "weight-loss", label: "Weight Loss", icon: "⚖️" },
-
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => handleGoalSelect(option.value)}
-                          className={`border-2 rounded-lg p-4 transition-all duration-200 ${
-                            selectedGoal === option.value
-                              ? 'border-orange-500 bg-orange-50 shadow-lg transform scale-105'
-                              : 'border-gray-200 hover:border-orange-300'
-                          }`}
-                          style={{ width: '100%' }}
-                        >
-                          <div className="text-2xl mb-2">{option.icon}</div>
-                          <div className={`font-medium ${
-                            selectedGoal === option.value ? 'text-orange-700' : 'text-gray-900'
-                          }`}>{option.label}</div>
-                        </button>
-                      ))}
-                    </div>
-                    {errors.goal && (
-                      <p className="text-red-600 text-sm mt-1">{errors.goal.message}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Timeline: {timelineWeeks} weeks *
-                    </label>
-                    {currentWeight && goalWeight && currentWeight > goalWeight && (
-                      <div className="mb-4">
-                        <div className={`text-sm p-3 rounded-lg ${
-                          isTimelineSafe() 
-                            ? 'bg-green-50 text-green-700 border border-green-200' 
-                            : 'bg-red-50 text-red-700 border border-red-200'
-                        }`}>
-                          <div className="flex items-center space-x-2">
-                            <span>{isTimelineSafe() ? '✅' : '⚠️'}</span>
-                            <span className="font-medium">
-                              Weekly loss rate: {getWeeklyLossRate().toFixed(2)}kg/week
-                            </span>
-                          </div>
-                          {!isTimelineSafe() && (
-                            <div className="mt-1 text-xs">
-                              Safe range: 0.2kg - 0.8kg per week. Adjust your timeline for safer results.
-                            </div>
-                          )}
-                          {dailyCalories > 0 && (
-                            <div className="mt-2 text-xs font-medium">
-                              📊 Daily calories adjusted to: {dailyCalories} kJ for this timeline
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    <div className="px-4">
-                      {(() => {
-                        const safeRange = calculateSafeTimelineRange();
-                        const sliderMin = safeRange.min;
-                        const sliderMax = safeRange.max;
-                        const adjustedValue = Math.max(sliderMin, Math.min(timelineWeeks, sliderMax));
-
-                        return (
-                          <>
-                            <input
-                              type="range"
-                              min={sliderMin}
-                              max={sliderMax}
-                              value={adjustedValue}
-                              onChange={(e) => handleTimelineChange(parseInt(e.target.value))}
-                              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                              style={{
-                                background: `linear-gradient(to right, ${isTimelineSafe() ? '#10b981' : '#f97316'} 0%, ${isTimelineSafe() ? '#10b981' : '#f97316'} ${((adjustedValue - sliderMin) / (sliderMax - sliderMin)) * 100}%, #e5e7eb ${((adjustedValue - sliderMin) / (sliderMax - sliderMin)) * 100}%, #e5e7eb 100%)`
-                              }}
-                            />
-                            <div className="flex justify-between text-sm text-gray-600 mt-2">
-                              <span>{sliderMin} weeks</span>
-                              <span className="text-xs">
-                                {currentWeight && goalWeight && currentWeight > goalWeight ? 'Safe Range' : 'Timeline'}
-                              </span>
-                              <span>{sliderMax} weeks</span>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    {errors.timeline && (
-                      <p className="text-red-600 text-sm mt-1">{errors.timeline.message}</p>
-                    )}
-                  </div>
-
-                  {currentWeight && goalWeight && (
-                    <div className={`rounded-lg p-4 ${
-                      isTimelineSafe() 
-                        ? 'bg-gradient-to-r from-green-50 to-emerald-50' 
-                        : 'bg-gradient-to-r from-red-50 to-orange-50'
-                    }`}>
-                      <h4 className="font-medium text-gray-900 mb-2">Your Goal Summary</h4>
-                      <p className="text-sm text-gray-700 mb-2">
-                        Target: {Math.abs(currentWeight - goalWeight).toFixed(1)}kg {currentWeight > goalWeight ? 'weight loss' : 'weight gain'} over {timelineWeeks} weeks
-                      </p>
-                      {dailyCalories > 0 && (
-                        <p className="text-sm text-blue-700 mb-2">
-                          <strong>Daily Calorie Target:</strong> {dailyCalories} kJ (adjusted for your timeline)
-                        </p>
-                      )}
-                      {currentWeight > goalWeight && (
-                        <div className={`text-xs ${
-                          isTimelineSafe() ? 'text-green-700' : 'text-red-700'
-                        }`}>
-                          <div className="flex items-center space-x-1">
-                            <span>{isTimelineSafe() ? '✅' : '⚠️'}</span>
-                            <span>
-                              {isTimelineSafe() 
-                                ? 'This is a safe and sustainable weight loss plan' 
-                                : 'This timeline may be too aggressive - consider extending your goal period'
-                              }
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                </motion.div>
               )}
 
               {/* Navigation Buttons */}

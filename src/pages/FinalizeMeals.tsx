@@ -47,7 +47,7 @@ export default function FinalizeMeals() {
       if (detailsError) {
         console.error("Error fetching user details:", detailsError);
         alert("Failed to load plan details.");
-        return;
+        return navigate("/personalized-plan");
       }
 
       if (!userDetails) {
@@ -56,10 +56,15 @@ export default function FinalizeMeals() {
       }
 
       setUserDetails(userDetails);
-      setDietPref(
-        userDetails.dietary_preference?.charAt(0).toUpperCase() +
-          userDetails.dietary_preference?.slice(1) || "No preference",
-      );
+      
+      // Auto-select diet preference from backend
+      const backendDietPref = userDetails.dietary_preference;
+      if (backendDietPref && backendDietPref !== "no-preference") {
+        const formattedPref = backendDietPref.charAt(0).toUpperCase() + backendDietPref.slice(1);
+        setDietPref(formattedPref);
+      } else {
+        setDietPref("No preference");
+      }
 
       // Use calculated_daily_calories directly from database
       const dailyKJ = Number(userDetails.calculated_daily_calories) || 2000;
@@ -96,7 +101,7 @@ export default function FinalizeMeals() {
     };
 
     fetchUserDetails();
-  }, []);
+  }, [navigate]);
 
   const addMeal = (mealId: number) => {
     const meal = meals.find((m) => m.id === mealId);
@@ -111,7 +116,11 @@ export default function FinalizeMeals() {
       0,
     );
 
-    if (currentTotal + (meal.kj ?? 0) > targets[activeDay]) return;
+    // Check if adding this meal would exceed the daily target
+    if (currentTotal + (meal.kj ?? 0) > targets[activeDay]) {
+      alert(`Adding this meal would exceed your daily target of ${targets[activeDay]} kJ for ${days[activeDay]}`);
+      return;
+    }
 
     setWeeklyMeals((prev) => {
       const dayMeals = prev[activeDay] || {};
@@ -156,6 +165,7 @@ export default function FinalizeMeals() {
       return;
     }
 
+    // Delete existing meal plan for user
     await supabase.from("weekly_meal_plan").delete().eq("user_id", user.id);
 
     const inserts = Object.entries(weeklyMeals).flatMap(([dayIndex, meals]) =>
@@ -242,31 +252,6 @@ export default function FinalizeMeals() {
           Customize your meals for each day of the week
         </p>
 
-        {/* User Goal Summary */}
-        {userDetails && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-blue-900 mb-2">Your Personalized Plan</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-blue-700 font-medium">Daily Target:</span>
-                <p className="text-blue-900">{userDetails.calculated_daily_calories} kJ</p>
-              </div>
-              <div>
-                <span className="text-blue-700 font-medium">Goal:</span>
-                <p className="text-blue-900">{userDetails.current_weight}kg → {userDetails.goal_weight}kg</p>
-              </div>
-              <div>
-                <span className="text-blue-700 font-medium">Timeline:</span>
-                <p className="text-blue-900">{userDetails.timeline} weeks</p>
-              </div>
-              <div>
-                <span className="text-blue-700 font-medium">Diet:</span>
-                <p className="text-blue-900">{dietPref}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-8">
           {/* Dietary Preference */}
@@ -349,8 +334,7 @@ export default function FinalizeMeals() {
         {/* Day Tabs */}
         <div className="flex justify-center gap-2 mb-6 flex-wrap">
           {days.map((label, i) => {
-            const dayMeals = getSelectedMealsForDay(i);
-            const hasSelection = dayMeals.length > 0;
+            const hasSelection = Object.keys(weeklyMeals[i] || {}).length > 0;
             
             return (
               <button
@@ -364,11 +348,9 @@ export default function FinalizeMeals() {
               >
                 {label}
                 {hasSelection && (
-                  <span className={`absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs flex items-center justify-center ${
-                    i === activeDay ? "bg-orange-400 text-white" : "bg-green-500 text-white"
-                  }`}>
-                    {dayMeals.reduce((sum, meal) => sum + (meal?.quantity || 0), 0)}
-                  </span>
+                  <span className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${
+                    i === activeDay ? "bg-orange-400" : "bg-green-500"
+                  }`}></span>
                 )}
               </button>
             );
@@ -448,7 +430,7 @@ export default function FinalizeMeals() {
                   .filter(filterByTags)
                   .map((meal) => (
                     <div
-                      key={meal.id}
+                      key={`${cat}-${meal.id}`}
                       className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group"
                     >
                       <div className="relative">
@@ -476,9 +458,9 @@ export default function FinalizeMeals() {
                           <span>Fat: {meal.fat}</span>
                         </div>
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {(meal.tags || []).map((tag) => (
+                          {(meal.tags || []).map((tag, tagIndex) => (
                             <span
-                              key={tag}
+                              key={`${meal.id}-tag-${tagIndex}`}
                               className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
                             >
                               {tag}
