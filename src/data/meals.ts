@@ -469,7 +469,7 @@ export const meals = [
   },
   // Breakfast meals
   {
-    id: 1,
+    id: 40,
     name: "Masala Oats with Vegetables",
     category: "breakfast",
     description: "Nutritious oats cooked with Indian spices, mixed vegetables, and a touch of turmeric for a healthy start to your day.",
@@ -483,7 +483,7 @@ export const meals = [
     tags: ["vegetarian", "high-fiber", "protein-rich"]
   },
   {
-    id: 2,
+    id: 41,
     name: "Poha with Green Vegetables",
     category: "breakfast",
     description: "Light and fluffy beaten rice with curry leaves, mustard seeds, and fresh vegetables.",
@@ -497,7 +497,7 @@ export const meals = [
     tags: ["vegetarian", "gluten-free", "light"]
   },
   {
-    id: 3,
+    id: 42,
     name: "Vegetable Idli",
     category: "breakfast",
     description: "Steamed rice cakes with mixed vegetables, served with coconut chutney and sambar.",
@@ -511,7 +511,7 @@ export const meals = [
     tags: ["vegetarian", "steamed", "south-indian"]
   },
   {
-    id: 4,
+    id: 43,
     name: "Egg Bhurji",
     category: "breakfast",
     description: "Scrambled eggs with onions, tomatoes, and aromatic Indian spices.",
@@ -527,7 +527,7 @@ export const meals = [
 
   // Lunch meals
   {
-    id: 5,
+    id: 44,
     name: "Quinoa Chole",
     category: "lunch",
     description: "High-protein quinoa cooked with chickpeas in a rich, spicy tomato-based curry.",
@@ -541,7 +541,7 @@ export const meals = [
     tags: ["vegetarian", "high-protein", "superfood"]
   },
   {
-    id: 6,
+    id: 45,
     name: "Chicken Sausage Wrap",
     category: "lunch",
     description: "Whole wheat wrap filled with spiced chicken sausage, fresh vegetables, and mint chutney.",
@@ -555,7 +555,7 @@ export const meals = [
     tags: ["non-vegetarian", "high-protein", "portable"]
   },
   {
-    id: 7,
+    id: 46,
     name: "Dal Khichdi Bowl",
     category: "lunch",
     description: "Comfort food with mixed lentils and rice, topped with ghee and served with pickle.",
@@ -571,7 +571,7 @@ export const meals = [
 
   // Dinner meals
   {
-    id: 8,
+    id: 47,
     name: "Paneer Tikka with Brown Rice",
     category: "dinner",
     description: "Grilled cottage cheese marinated in yogurt and spices, served with nutty brown rice.",
@@ -585,7 +585,7 @@ export const meals = [
     tags: ["vegetarian", "grilled", "high-protein"]
   },
   {
-    id: 9,
+    id: 48,
     name: "Fish Curry with Cauliflower Rice",
     category: "dinner",
     description: "Kerala-style fish curry made with coconut milk, served with low-carb cauliflower rice.",
@@ -599,7 +599,7 @@ export const meals = [
     tags: ["non-vegetarian", "low-carb", "south-indian"]
   },
   {
-    id: 10,
+    id: 49,
     name: "Rajma Bowl",
     category: "dinner",
     description: "Protein-rich kidney beans in a thick, spiced gravy with steamed quinoa.",
@@ -615,7 +615,7 @@ export const meals = [
 
   // Snacks
   {
-    id: 11,
+    id: 50,
     name: "Vegan Smoothie Bowl",
     category: "snack",
     description: "Nutrient-dense smoothie bowl with mixed berries, nuts, and Indian superfoods.",
@@ -629,7 +629,7 @@ export const meals = [
     tags: ["vegan", "antioxidant-rich", "superfood"]
   },
   {
-    id: 12,
+    id: 51,
     name: "Baked Samosa",
     category: "snack",
     description: "Healthier version of the classic snack, baked instead of fried with spiced potato filling.",
@@ -643,7 +643,7 @@ export const meals = [
     tags: ["vegetarian", "baked", "traditional"]
   },
   {
-    id: 13,
+    id: 52,
     name: "Protein Laddu",
     category: "snack",
     description: "Energy balls made with dates, nuts, and protein powder for a post-workout treat.",

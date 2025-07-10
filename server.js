@@ -20,9 +20,14 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-app.post("/api/create-payment-intent", (req, res) => {
+app.post("/api/create-payment-intent", async (req, res) => {
   console.log("Payment intent route hit with body:", req.body);
-  createPaymentIntentHandler(req, res);
+  try {
+    await createPaymentIntentHandler(req, res);
+  } catch (error) {
+    console.error("Error in payment intent handler:", error);
+    res.status(500).json({ error: "Internal server error", details: error.message });
+  }
 });
 
 // Add error handling middleware

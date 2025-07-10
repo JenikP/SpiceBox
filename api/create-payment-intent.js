@@ -24,8 +24,8 @@ export default async function handler(req, res) {
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount),
-      currency: "usd",
-      description: `SpiceBox ${planName} - Healthy meal delivery`,
+      currency: "aud",
+      description: `SpiceFit ${planName} - Healthy meal delivery`,
       receipt_email: customerEmail,
       metadata: {
         planId: planId || "",
