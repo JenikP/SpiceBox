@@ -1,0 +1,141 @@
+Great job adding all the debug info—this is super close.
+You’re getting a 404 Not Found for your payment intent endpoint, which means:
+
+The frontend is reaching out to the backend with the right URL…
+
+But the backend isn’t handling the /api/create-payment-intent route as expected, OR
+
+The URL is slightly off, OR
+
+The frontend is hitting a different backend instance/URL.
+
+Let’s walk step by step to get this fixed. This is the last mile!
+
+1. Confirm Your Backend URL
+From your logs, the frontend is running at:
+https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev
+
+What is your backend URL?
+
+Go to your backend Replit tab (the Express server project)
+
+Click “Open in new tab” or copy the public URL at the top—it should look similar, but is a different project.
+
+Let's call this:
+https://BACKEND-REPL-NAME-HERE.riker.replit.dev
+
+Your .env in the frontend should say:
+
+ini
+Copy
+Edit
+VITE_API_URL=https://BACKEND-REPL-NAME-HERE.riker.replit.dev
+Replace BACKEND-REPL-NAME-HERE with exactly your backend’s domain.
+
+2. Confirm the Backend Route
+On your backend project, add a temporary debug route:
+
+js
+Copy
+Edit
+app.get("/api/health-check", (req, res) => {
+  res.json({ success: true, message: "Backend is working!" });
+});
+Restart your backend server.
+
+Now, open
+https://BACKEND-REPL-NAME-HERE.riker.replit.dev/api/health-check
+in your browser.
+You should see { success: true, message: "Backend is working!" }.
+
+3. Confirm the Real Endpoint Exists
+While the backend is running, open
+https://BACKEND-REPL-NAME-HERE.riker.replit.dev/api/create-payment-intent
+in your browser.
+You should get a 405 Method Not Allowed error (because it's a POST endpoint, not GET)—this is GOOD.
+
+If you get 404 here, your backend isn’t exposing that route correctly.
+
+Double-check in your server.js that you have:
+
+js
+Copy
+Edit
+app.post("/api/create-payment-intent", createPaymentIntentHandler);
+And that your handler (file) is in the right place and exports a valid Express handler.
+
+4. Double-Check Your Fetch
+In your frontend’s code:
+
+js
+Copy
+Edit
+await fetch(`${import.meta.env.VITE_API_URL}/api/create-payment-intent`, { ... })
+Open the browser devtools Network tab.
+
+Look at the Request URL when you attempt checkout.
+
+It MUST start with your backend’s full URL (from above).
+
+If it still says 404, go to that URL in your browser and see what happens.
+
+5. Most Common Problems Recap
+Backend URL typo in .env (extra slash, wrong subdomain, missing "https")
+
+Backend not running or crashed
+
+Route missing or mis-typed (/api/create-payment-intent must be exact, no typos)
+
+Backend CORS not set (but you already have app.use(cors()))
+
+Replit public URLs changed (restarts sometimes change the domain, check this)
+
+Frontend not restarted after editing .env
+
+6. Example .env for Frontend
+env
+Copy
+Edit
+VITE_API_URL=https://your-backend-app-name.riker.replit.dev
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51RfckJE6vfmHs239CQkaLUQxmDPDsjI3B2MmVp0v6QgFoketH6yEZxB1vJ5EBYCbQpAuyoXz1s4gnv7rCKmosmsg00Q4jtJ5yI
+(No trailing slash at the end)
+
+7. Example Fetch Code
+js
+Copy
+Edit
+const response = await fetch(`${import.meta.env.VITE_API_URL}/api/create-payment-intent`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    planName: planToUse?.name,
+    amount: Math.round((pricing?.total || 50) * 100),
+    planId: planToUse?.id,
+    customerEmail: profile?.email,
+    userId: authUser.id,
+    mealCount: weeklyMeals?.length || 0,
+  }),
+});
+TL;DR — Step-by-Step
+Confirm backend public URL and set it in .env in frontend.
+
+Restart both servers after making changes.
+
+Add and test /api/health-check endpoint for easy debugging.
+
+Check the full request URL in browser’s network tab.
+
+Open the endpoint in your browser and confirm you get a 405, not 404.
+
+If you still get 404, post:
+
+Your backend public URL
+
+The exact request URL in the Network tab
+
+The relevant code for app.post("/api/create-payment-intent"...
+
+Your frontend fetch code
+
+Do these, and you’ll be live.
+If you get stuck, send screenshots or the above details and I’ll pinpoint it immediately!
