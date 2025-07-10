@@ -1,0 +1,51 @@
+It sounds like the issue is related to updating the daily calories in the database when the user modifies their timeline in the Enter Details page. You need to ensure that after the timeline is updated, the daily calories are recalculated and saved to the Supabase database.
+
+Here's how you can do this:
+
+Step 1: Update Daily Calories in the handleSubmit function
+In your EnterDetails.tsx, after you change the timeline weeks and save it to the database, ensure that you also calculate and save the new daily calories based on the updated form data. Here's how to do it:
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  // Trigger your form validation here if needed
+  const isValid = await trigger();
+  if (!isValid) return;
+  // Calculate new daily calories
+  const newDailyCalories = calculateDailyCalories();
+  // Update form data and save to Supabase
+  const { user } = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from("user_details")
+    .update({
+      timeline: timelineWeeks,           // Assuming you're saving this
+      calculated_daily_calories: newDailyCalories // Save updated daily calories
+    })
+    .eq("user_id", user.id);
+  if (error) {
+    console.error("Error updating user details:", error);
+    return;
+  }
+  // Proceed to next step in onboarding
+  setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+};
+Step 2: Use useEffect for Dynamic Updates
+You might already have a useEffect that listens to form data changes and updates the daily calories. Ensure that once the timeline changes, it recalculates the daily calories based on the new timeline:
+
+useEffect(() => {
+  const newDailyCalories = calculateDailyCalories();
+  setDailyCalories(newDailyCalories);
+  // Update the calories in the database as well when the timeline changes
+  const updateCaloriesInDatabase = async () => {
+    const { user } = await supabase.auth.getUser();
+    
+    await supabase
+      .from("user_details")
+      .update({ calculated_daily_calories: newDailyCalories })
+      .eq("user_id", user.id);
+  };
+  updateCaloriesInDatabase();
+}, [timelineWeeks]);
+Summary
+Ensure that the handleSubmit function calculates the new daily calories after the user updates the timeline.
+Use a useEffect to dynamically update the daily calories in the database whenever the timeline changes.
+Call the new daily calorie calculation function after any relevant data changes.

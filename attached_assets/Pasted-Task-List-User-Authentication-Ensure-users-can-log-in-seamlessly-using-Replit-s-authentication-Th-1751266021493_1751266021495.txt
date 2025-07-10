@@ -1,0 +1,67 @@
+Task List
+User Authentication:
+
+Ensure users can log in seamlessly using Replit's authentication. This has been implemented already but verify its effectiveness.
+Input User Details:
+
+Add functionality to the EnterDetails page to capture and store user details. Make sure it's connected to Supabase to save user data.
+Use this block of code as an example for saving user details:
+const onSubmitDetails = async (data) => {
+  const { error } = await supabase.from("user_details").insert({
+    user_id: user.id,
+    dietary_preference: data.dietaryPreference,
+    calculated_daily_calories: data.dailyCalories,
+  });
+  if (error) {
+    console.error("Error saving user details:", error);
+  } else {
+    navigate("/personalized-plan");
+  }
+};
+Personalized Meal Page:
+
+Ensure the PersonalizedPlan page accurately fetches and displays the personalized meal plan from Supabase upon user login.
+Validate that it connects properly using:
+const fetchPlan = async () => {
+  const { data, error } = await supabase
+    .from("meal_plans")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+  if (error) {
+    console.error("Error fetching meal plan:", error);
+  } else {
+    setFormData(data);
+  }
+};
+Meal Selection:
+
+Integrate the meal selection process within FinalizeMeals, allowing users to choose meals based on their preferences and dietary restrictions.
+Pricing Integration:
+
+In the Pricing page, use Supabase to fetch available plans.
+Amend the code to get plans from Supabase based on user selection. Example:
+const fetchPlans = async () => {
+  const { data: plans, error } = await supabase.from("plans").select("*");
+  if (error) console.error("Error fetching plans:", error);
+  else setPlans(plans);
+};
+Checkout Process:
+
+In Checkout, integrate functionality to handle payments based on the selected pricing plan.
+Use Supabase to log the order details:
+const onSubmitOrder = async (orderData) => {
+  const { error } = await supabase.from("orders").insert({
+    user_id: user.id,
+    meal_plan_id: selectedPlan.id,
+    total_amount: orderData.total,
+    order_number: generateOrderId(),
+  });
+  if (error) {
+    console.error("Error processing order:", error);
+  }
+};
+User Experience:
+
+Ensure smooth transitions between steps (e.g., after entering details, redirect users to the personalized page).
+Confirm that navigation is intuitive, with clear buttons and feedback for user actions (like error messages).

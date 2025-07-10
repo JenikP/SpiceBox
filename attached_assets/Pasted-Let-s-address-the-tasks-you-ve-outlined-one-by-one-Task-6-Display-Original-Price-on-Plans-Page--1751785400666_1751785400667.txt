@@ -1,0 +1,66 @@
+Let's address the tasks you've outlined one by one.
+
+Task 6: Display Original Price on Plans Page
+To show the original price above the features in your Plans and Pricing pages, you can add a <span> element that displays the price before the list of features. Here’s how you can modify the relevant section in your Pricing component:
+
+<ul className="space-y-3 mb-8">
+  <li className="text-gray-500">
+    Original Price: <span className="line-through">${plan.originalMonthlyPrice}</span>
+  </li>
+  {plan.features.map((feature, featureIndex) => (
+    <li key={featureIndex} className="flex items-start">
+      <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+      </svg>
+      <span className="text-gray-700">{feature}</span>
+    </li>
+  ))}
+</ul>
+Task 7: Add Timeline Selector in Personalized Plan Page
+Here’s how you can add a timeline selector that influences the daily calorie calculation. You will use a similar range input that adjusts based on user selection, ensuring that it respects the weight loss conditions of not exceeding 800g and not being below 300g. Here's the code snippet to add to your Personalized Plan page:
+
+const handleTimelineChange = (e) => {
+  const value = Number(e.target.value);
+  // Validate the value for weight loss
+  if (value >= 2 && value <= 16) {
+    setSelectedTimeline(value);
+  }
+};
+{/* Timeline Selector */}
+<div className="mt-6 bg-white rounded-xl p-6 shadow-lg max-w-md mx-auto">
+  <h3 className="text-lg font-semibold text-gray-900 mb-4">Plan Duration</h3>
+  <div className="flex items-center space-x-4">
+    <span className="text-sm text-gray-600">2 weeks</span>
+    <input
+      type="range"
+      min="2"
+      max="16"
+      step="1"
+      value={selectedTimeline}
+      onChange={handleTimelineChange}
+      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+    />
+    <span className="text-sm text-gray-600">16 weeks</span>
+  </div>
+  <div className="mt-2 text-center">
+    <span className="text-lg font-bold text-orange-600">{selectedTimeline} weeks</span>
+  </div>
+</div>
+Task 8: Ensure Daily Calories Recalculate on Changes
+To make sure that the daily calories are recalculated every time the user updates their information, you can modify your handlers in the Enter Details and Personalized Plan components. After every update, call the calculateDailyCalories function. Here’s an example in your handleSubmit of the Enter Details Step 4:
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  // Update user data...
+  await updateUserData(formData);
+  // Recalculate daily calories
+  const newDailyCalories = calculateDailyCalories();
+  
+  // Update state or wherever you need it
+  setDailyCalories(newDailyCalories);
+};
+// Call calculateDailyCalories after updating other fields
+useEffect(() => {
+  calculateDailyCalories();
+}, [formData]);
+Make sure that your calculateDailyCalories function accurately uses the updated information from the state for the daily calorie calculation.

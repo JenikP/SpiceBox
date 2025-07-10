@@ -1,0 +1,47 @@
+Task List
+Modify Footer:
+
+Change the text from "© 2024 SpiceFit. All rights reserved. Made with ❤️ for the Indian Australian community." to "© 2025 SpiceFit. All rights reserved. Made with ❤️ for the South Asian community."
+Add social media icons for Facebook, Instagram, TikTok, and LinkedIn.
+File to modify: Identify the file handling the footer component (likely in src/components/Footer.tsx or similar).
+
+Add Dates in Testimonials:
+
+Incorporate date information for each testimonial, ensuring it’s displayed prominently.
+File to modify: This will likely be within the testimonials array in the relevant component (e.g., src/components/Testimonials.tsx).
+
+Update Testimonial Section:
+
+Add a full stop at the end of "Real results from real people."
+Include new testimonials.
+File to modify: Check the same testimonials file as above.
+
+Enhance Logo Section:
+
+Add "Indian. Delivered. Results." below the logo on the homepage.
+File to modify: Possibly in src/components/Header.tsx or src/pages/Home.tsx.
+
+Add Features in 'How It Works':
+
+In the "Why Choose SpiceBox" section, add two boxes indicating "Made Fresh Locally" and "No Preservatives."
+File to modify: Likely found in src/pages/HowItWorks.tsx or a related component.
+
+Show Real Price on Plans Page:
+
+Ensure the pricing displayed on the plans page is accurate and reflects the real prices.
+File to modify: Look for src/pages/Plan.tsx or wherever plan details are displayed.
+
+Timeline Scroll in Personalized Plan Page:
+
+Implement a timeline scroll that allows the user to select and display a timeline within the personalized plan page, similar to meal selection.
+File to modify: Check in src/pages/PersonalizedPlan.tsx for the implementation of this feature.
+
+Fix Error in User Input on Enter Details and Personalized Plan Pages:
+
+Investigate and fix the issue where users' calorie input is not updating as expected.
+File to modify: Likely found in src/pages/EnterDetails.tsx and src/pages/PersonalizedPlan.tsx.
+
+Notes for Implementation
+Before making changes, ensure to back up your files.
+Each of these tasks may require integration with existing state management or data layers, so review how data flows through your components.
+Test each change thoroughly to ensure functionality remains intact.

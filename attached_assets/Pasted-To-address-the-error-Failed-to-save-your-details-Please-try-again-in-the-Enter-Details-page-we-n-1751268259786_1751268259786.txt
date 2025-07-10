@@ -1,0 +1,55 @@
+To address the error "Failed to save your details. Please try again" in the Enter Details page, we need to verify the following aspects of your code that could potentially lead to this issue when saving user details to Supabase.
+
+Steps to Troubleshoot and Fix
+Check User Authentication: Ensure the user is authenticated before attempting to save details. If authentication fails, the user won't have a valid user.id.
+
+Log the Error: Modify the error handling to log the full error object to provide more context.
+
+Validate Input Data Parameters: Ensure that all required fields are being passed correctly to the Supabase insertion. Missing required fields could lead to errors.
+
+Debugging Network Calls: Ensure the Supabase client is properly initialized and that there are no connection issues.
+
+Suggested Code Modifications
+Update your onSubmitDetails function in src/pages/EnterDetails.tsx like the following:
+
+const onSubmitDetails = async (data) => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    console.error("User Authentication Error:", userError);
+    alert("Failed to authenticate. Please try again.");
+    return;
+  }
+  // Calculate daily calories as before
+  const tdee = bmr * activityMultipliers[data.activityLevel];
+  const dailyCalories = data.goal === "weight-loss" ? Math.round(tdee - 500) : Math.round(tdee);
+  // Save user details to Supabase
+  const { error } = await supabase.from("user_details").insert({
+    user_id: user.id,
+    full_name: data.fullName,
+    email: data.email,
+    phone: data.phone,
+    age: data.age,
+    gender: data.gender,
+    height: data.height,
+    current_weight: data.currentWeight,
+    goal_weight: data.goalWeight,
+    activity_level: data.activityLevel,
+    dietary_preference: data.dietaryPreference,
+    allergies: data.allergies,
+    medical_conditions: data.medicalConditions,
+    goal: data.goal,
+    timeline: data.timeline,
+    calculated_daily_calories: dailyCalories,
+  });
+  if (error) {
+    console.error("Error saving user details:", error);
+    alert("Failed to save your details. Please try again.");  // You can log error message here to debug
+    return;
+  }
+  // Save data and navigate to personalized plan
+  navigate("/personalized-plan", { state: { formData: data } });
+};
+Additional Considerations
+Input Validation: Make sure that the validation schema (Zod) for the form fields matches your input. If any validations fail, it might prevent data from being saved.
+Check Supabase Policies: Ensure your Supabase table has the correct Row Level Security (RLS) policies set up to allow inserts from authenticated users.
+Inspect Network Requests: Use the browser's developer tools to inspect network requests. Make sure your insert request is being sent and check the response from the Supabase API.

@@ -1,0 +1,49 @@
+regarding these tasks
+
+⁠6. Plans page add the real price
+7.⁠ ⁠Personified plan page, add a timeline scroll so the user can change there time in the page. Of course have the same configuration as in the meals page
+8.⁠ ⁠Error in the enter details page and the personalised page where the users cal is not changing.
+
+for the 6th task
+in the plans page and the pricing page it still only shows the weekly and monthly price which is good, but above the
+
+<ul className="space-y-3 mb-8"> {plan.features.map((feature, featureIndex) => ( <li key={featureIndex} className="flex items-start"> <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"> <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /> </svg> <span className="text-gray-700">{feature}</span> </li> ))} </ul>
+              show the orignal price called price in the 
+               {
+id: "monthly",
+name: "Monthly Plan",
+description: "Our most popular plan with full meal coverage",
+  weeklyPrice: 187,
+  monthlyPrice: 810,
+  originalWeeklyPrice: 231,
+  originalMonthlyPrice: 1001,
+  price: 810,
+duration: "30 days",
+meals: 90,
+perMeal: "$9.00",
+notes: "Flexible after 14 days",
+features: [
+  "90 meals (3/day for 30 days)",
+  "Flexible subscription",
+  "Pause or cancel anytime",
+  "Progress tracking + nutrition support"
+],
+badge: "Most Flexible",
+badgeColor: "bg-green-500",
+recommended: true
+},
+
+so the user knows what the real price for the plan is.
+
+now for the 7th task
+7.⁠ ⁠Personified plan page, add a timeline scroll so the user can change there time in the page. Of course have the same configuration as in the meals page
+
+what you added is correct but not what i wanted, i wanted to add a timeline selector that is the same as the the one in the enter details page, like how it changes the daily calories need to lose the weight the user wants to lose. and keep the validation that the user can't lose more than 800g per week, and less than 300g per week.
+
+and the 8th task
+
+8.⁠ ⁠Error in the enter details page and the personalised page where the users cal is not changing.
+
+so whats happening is that in the backend,
+
+when the user already has data in the backend, and just wants to change their timeline or anyother info it changes it but, it does not calculate again on the step 4, so you know how if a user logsin and goes to the enterdetails, their details are already there and they go next next next to step 4 lets say they want to just change their weight they came back after 6 months. and they just change that and go, next, next next, or they just the timeline, it changes it in the backend but does not calculate the daily calories again. so fix that make it calculate the dailiy calories everytime the user changes anything ofcourse afdter the step4
