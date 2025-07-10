@@ -14,6 +14,7 @@ externalPort = 3001
 [[ports]]
 localPort = 5173
 externalPort = 80
+exposeLocalhost = true
 
 [workflows]
 runButton = "Start Application"
@@ -29,8 +30,8 @@ args = "npm install"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev &"
+args = "node server.js &"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node server.js"
+args = "npm run dev"

@@ -19,6 +19,11 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint
+app.get("/api/health-check", (req, res) => {
+  res.json({ success: true, message: "Backend is working!" });
+});
+
 // API Routes
 app.post("/api/create-payment-intent", async (req, res) => {
   console.log("Payment intent route hit with body:", req.body);
