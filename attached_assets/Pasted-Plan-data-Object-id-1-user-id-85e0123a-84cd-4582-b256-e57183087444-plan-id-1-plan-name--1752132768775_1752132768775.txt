@@ -1,0 +1,39 @@
+Plan data: 
+Object {id: 1, user_id: "85e0123a-84cd-4582-b256-e57183087444", plan_id: 1, plan_name: "14-Day Kickstart Plan", plan_price: 189, …}
+billing_cycle: "weekly"
+created_at: "2025-07-06T09:09:19.230049+00:00"
+id: 1
+plan_id: 1
+plan_name: "14-Day Kickstart Plan"
+plan_price: 189
+updated_at: "2025-07-10T07:31:57.274+00:00"
+user_id: "85e0123a-84cd-4582-b256-e57183087444"
+[[Prototype]]: Object
+Pricing data: 
+Object {basePrice: 189, discount: 28.349999999999998, subtotal: 189, total: 160.65}
+Attempting to create payment intent...
+Plan data: 
+Object {id: 1, user_id: "85e0123a-84cd-4582-b256-e57183087444", plan_id: 1, plan_name: "14-Day Kickstart Plan", plan_price: 189, …}
+billing_cycle: "weekly"
+created_at: "2025-07-06T09:09:19.230049+00:00"
+id: 1
+plan_id: 1
+plan_name: "14-Day Kickstart Plan"
+plan_price: 189
+updated_at: "2025-07-10T07:31:57.274+00:00"
+user_id: "85e0123a-84cd-4582-b256-e57183087444"
+[[Prototype]]: Object
+Pricing data: 
+Object {basePrice: 189, discount: 28.349999999999998, subtotal: 189, total: 160.65}
+Payment intent response status: 404
+❌ Failed to fetch payment intent: 404 Not Found 
+at t.value (https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Payment intent response status: 404
+❌ Failed to fetch payment intent: 404 Not Found 
+at t.value (https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://fced7515-fb16-4e19-b53a-6186490e5ee4-00-3hi0fjy6x7qz8.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
