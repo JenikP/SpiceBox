@@ -194,32 +194,46 @@ export default function Checkout() {
         // Fetch payment intent clientSecret
         const planToUse = planSelection || selectedPlan || plan || { name: "Custom Plan", id: "custom" };
 
-        const response = await fetch("/api/create-payment-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            planName: planToUse?.plan_name || planToUse?.name,
-            amount: Math.round((pricing?.total || 50) * 100),
-            planId: planToUse?.plan_id || planToUse?.id,
-            customerEmail: profile?.email,
-            userId: authUser.id,
-            mealCount: weeklyMeals?.length || 0,
-          }),
-        });
+        console.log("Attempting to create payment intent...");
+        console.log("Plan data:", planToUse);
+        console.log("Pricing data:", pricing);
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.clientSecret) {
-            setClientSecret(data.clientSecret);
-            setClientSecretError("");
-            console.log("Client Secret:", data.clientSecret);
+        try {
+          const response = await fetch("/api/create-payment-intent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              planName: planToUse?.plan_name || planToUse?.name || "Custom Plan",
+              amount: Math.round((pricing?.total || 50) * 100),
+              planId: planToUse?.plan_id || planToUse?.id || "custom",
+              customerEmail: profile?.email || authUser.email,
+              userId: authUser.id,
+              mealCount: weeklyMeals?.length || 0,
+            }),
+          });
+
+          console.log("Payment intent response status:", response.status);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log("Payment intent response data:", data);
+            
+            if (data.clientSecret) {
+              setClientSecret(data.clientSecret);
+              setClientSecretError("");
+              console.log("✅ Client Secret received:", data.clientSecret);
+            } else {
+              setClientSecretError("No clientSecret in response from server.");
+              console.error("❌ No clientSecret in payment intent response:", data);
+            }
           } else {
-            setClientSecretError("No clientSecret in response from server.");
-            console.error("No clientSecret in payment intent response:", data);
+            const errorText = await response.text();
+            setClientSecretError(`Failed to fetch payment intent: ${response.status} - ${errorText}`);
+            console.error("❌ Failed to fetch payment intent:", response.status, response.statusText, errorText);
           }
-        } else {
-          setClientSecretError(`Failed to fetch payment intent: ${response.status}`);
-          console.error("Failed to fetch payment intent:", response.status, response.statusText);
+        } catch (fetchError) {
+          setClientSecretError(`Network error: ${fetchError.message}`);
+          console.error("❌ Network error creating payment intent:", fetchError);
         }
       } catch (error) {
         setClientSecretError("Error occurred in fetchData: " + error.message);

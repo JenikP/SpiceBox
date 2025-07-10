@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY ||
-    "***REMOVED***51RfckJE6vfmHs239CQkaLUQxmDPDsjI3B2MmVp0v6QgFoketH6yEZxB1vJ5EBYCbQpAuyoXz1s4gnv7rCKmosmsg00rz7CXtR0tP1J4Zxcr2VfCpPnPU100bvYqDQRx",
+    "***REMOVED***51QYuE7Kt5CDCQ1bVGJOCp96xhKGcq6LLcaL8wRsIfKYcPZrq2FNS0Tr0seBuOwR0z1FtF3MuFxNKQoQQEmpHYCx000Y2zKlE7v",
 );
 
 export default async function handler(req, res) {

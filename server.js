@@ -21,8 +21,16 @@ app.use(express.json());
 
 // API Routes
 app.post("/api/create-payment-intent", (req, res) => {
+  console.log("Payment intent route hit with body:", req.body);
   createPaymentIntentHandler(req, res);
 });
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+  res.status(500).json({ error: "Internal server error", details: err.message });
+});
+
 app.use(express.static("dist"));
 
 // Create checkout session endpoint

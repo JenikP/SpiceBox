@@ -205,10 +205,17 @@ export default function FinalizeMeals() {
     return meal ? sum + (meal.kj ?? 0) * count : sum;
   }, 0);
 
+  const remainingKJ = Math.max(0, currentTarget - totalKJ);
+
   const allDaysSelected = days.every((_, idx) => {
     const mealsForDay = weeklyMeals[idx];
     return mealsForDay && Object.values(mealsForDay).some((count) => count > 0);
   });
+
+  // Filter meals that can fit within remaining kJ budget
+  const canAffordMeal = (meal: any) => {
+    return (meal.kj ?? 0) <= remainingKJ;
+  };
 
   const toggleFilter = (filter: string) => {
     setSelectedFilters((prevFilters) => {
@@ -367,8 +374,11 @@ export default function FinalizeMeals() {
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm opacity-75">Remaining</p>
-              <p className="font-bold">{Math.max(0, currentTarget - totalKJ)} kJ</p>
+              <p className="text-sm opacity-75">Remaining Budget</p>
+              <p className="font-bold">{remainingKJ} kJ</p>
+              {remainingKJ < 500 && remainingKJ > 0 && (
+                <p className="text-orange-300 text-xs mt-1">⚠️ Low budget</p>
+              )}
             </div>
           </div>
           <div className="w-full h-3 bg-red-700 rounded-full overflow-hidden">
@@ -428,9 +438,10 @@ export default function FinalizeMeals() {
                   .filter((meal) => meal.category === cat)
                   .filter(filterByDiet)
                   .filter(filterByTags)
-                  .map((meal) => (
+                  .filter(canAffordMeal)
+                  .map((meal, mealIndex) => (
                     <div
-                      key={`${cat}-${meal.id}`}
+                      key={`${cat}-${meal.id}-${mealIndex}-${activeDay}`}
                       className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group"
                     >
                       <div className="relative">
@@ -460,7 +471,7 @@ export default function FinalizeMeals() {
                         <div className="flex flex-wrap gap-2 mb-4">
                           {(meal.tags || []).map((tag, tagIndex) => (
                             <span
-                              key={`${meal.id}-tag-${tagIndex}`}
+                              key={`${meal.id}-${cat}-tag-${tagIndex}-${activeDay}`}
                               className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
                             >
                               {tag}

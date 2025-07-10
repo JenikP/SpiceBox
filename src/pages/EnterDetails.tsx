@@ -290,8 +290,8 @@ const EnterDetails = () => {
     setSelectedGoal(goal);
     setValue("goal", goal as "weight-loss" | "maintain-weight");
     
-    // Auto-adjust goal weight for maintain weight
-    if (goal === "maintain-weight" && currentWeight) {
+    // Auto-adjust goal weight for maintain weight only if it's not already set
+    if (goal === "maintain-weight" && currentWeight && !goalWeight) {
       setValue("goalWeight", currentWeight);
     }
   };
@@ -331,6 +331,24 @@ const EnterDetails = () => {
 
     setTimelineWeeks(safeWeeks);
     setValue("timeline", safeWeeks);
+  };
+
+  // Calculate initial timeline for 0.50kg/week rate
+  const getInitialTimelineFor050kgWeek = () => {
+    const currentWeight = watch("currentWeight");
+    const goalWeight = watch("goalWeight");
+    const goal = watch("goal");
+
+    if (goal !== "weight-loss" || !currentWeight || !goalWeight || currentWeight <= goalWeight) {
+      return 12; // Default
+    }
+
+    const weightToLose = currentWeight - goalWeight;
+    const weeksFor050Rate = Math.ceil(weightToLose / 0.5);
+    const safeRange = calculateSafeTimelineRange();
+    
+    // Ensure it's within safe range
+    return Math.max(safeRange.min, Math.min(weeksFor050Rate, safeRange.max));
   };
 
   // Calculate weekly weight loss rate for display
@@ -467,6 +485,21 @@ const EnterDetails = () => {
     const newDailyCalories = calculateDailyCalories();
     setDailyCalories(newDailyCalories);
   }, [timelineWeeks]);
+
+  // Set initial timeline when goal and weights are available
+  useEffect(() => {
+    const goal = watch("goal");
+    const currentWeight = watch("currentWeight");
+    const goalWeight = watch("goalWeight");
+    
+    if (goal === "weight-loss" && currentWeight && goalWeight && currentWeight > goalWeight) {
+      const initialTimeline = getInitialTimelineFor050kgWeek();
+      if (timelineWeeks !== initialTimeline) {
+        setTimelineWeeks(initialTimeline);
+        setValue("timeline", initialTimeline);
+      }
+    }
+  }, [watch("goal"), watch("currentWeight"), watch("goalWeight")]);
 
   // Validation for goal weight based on selected goal
   const getGoalWeightValidation = () => {
