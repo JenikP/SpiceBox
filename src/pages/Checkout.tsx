@@ -1,4 +1,3 @@
-
 // src/pages/Checkout.tsx
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -48,9 +47,9 @@ function PaymentFormContent({
     setValue,
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { 
+    defaultValues: {
       email: userProfile?.email || "",
-      specialInstructions: specialInstructions || ""
+      specialInstructions: specialInstructions || "",
     },
   });
 
@@ -192,48 +191,68 @@ export default function Checkout() {
         const pricing = calculatePricing(planSelection || selectedPlan, plan);
 
         // Fetch payment intent clientSecret
-        const planToUse = planSelection || selectedPlan || plan || { name: "Custom Plan", id: "custom" };
+        const planToUse = planSelection ||
+          selectedPlan ||
+          plan || { name: "Custom Plan", id: "custom" };
 
         console.log("Attempting to create payment intent...");
         console.log("Plan data:", planToUse);
         console.log("Pricing data:", pricing);
 
         try {
-          const response = await fetch("/api/create-payment-intent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              planName: planToUse?.plan_name || planToUse?.name || "Custom Plan",
-              amount: Math.round((pricing?.total || 50) * 100),
-              planId: planToUse?.plan_id || planToUse?.id || "custom",
-              customerEmail: profile?.email || authUser.email,
-              userId: authUser.id,
-              mealCount: weeklyMeals?.length || 0,
-            }),
-          });
+          const response = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/create-payment-intent`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                planName:
+                  planToUse?.plan_name || planToUse?.name || "Custom Plan",
+                amount: Math.round((pricing?.total || 50) * 100),
+                planId: planToUse?.plan_id || planToUse?.id || "custom",
+                customerEmail: profile?.email || authUser.email,
+                userId: authUser.id,
+                mealCount: weeklyMeals?.length || 0,
+              }),
+            },
+          );
+          console.log("VITE_API_URL is", import.meta.env.VITE_API_URL);
 
           console.log("Payment intent response status:", response.status);
 
           if (response.ok) {
             const data = await response.json();
             console.log("Payment intent response data:", data);
-            
+
             if (data.clientSecret) {
               setClientSecret(data.clientSecret);
               setClientSecretError("");
               console.log("✅ Client Secret received:", data.clientSecret);
             } else {
               setClientSecretError("No clientSecret in response from server.");
-              console.error("❌ No clientSecret in payment intent response:", data);
+              console.error(
+                "❌ No clientSecret in payment intent response:",
+                data,
+              );
             }
           } else {
             const errorText = await response.text();
-            setClientSecretError(`Failed to fetch payment intent: ${response.status} - ${errorText}`);
-            console.error("❌ Failed to fetch payment intent:", response.status, response.statusText, errorText);
+            setClientSecretError(
+              `Failed to fetch payment intent: ${response.status} - ${errorText}`,
+            );
+            console.error(
+              "❌ Failed to fetch payment intent:",
+              response.status,
+              response.statusText,
+              errorText,
+            );
           }
         } catch (fetchError) {
           setClientSecretError(`Network error: ${fetchError.message}`);
-          console.error("❌ Network error creating payment intent:", fetchError);
+          console.error(
+            "❌ Network error creating payment intent:",
+            fetchError,
+          );
         }
       } catch (error) {
         setClientSecretError("Error occurred in fetchData: " + error.message);
@@ -246,8 +265,14 @@ export default function Checkout() {
   }, [navigate, selectedPlan]);
 
   const calculateNutrition = () => {
-    const totalKJ = selectedMeals.reduce((sum, meal) => sum + (meal?.kj || 0), 0);
-    const totalProtein = selectedMeals.reduce((sum, meal) => sum + (meal?.protein || 0), 0);
+    const totalKJ = selectedMeals.reduce(
+      (sum, meal) => sum + (meal?.kj || 0),
+      0,
+    );
+    const totalProtein = selectedMeals.reduce(
+      (sum, meal) => sum + (meal?.protein || 0),
+      0,
+    );
     const averageDailyKJ = Math.round(totalKJ / 7);
     const weeklyProtein = Math.round(totalProtein);
     return { averageDailyKJ, weeklyProtein, totalKJ };
@@ -255,7 +280,7 @@ export default function Checkout() {
 
   const calculatePricing = (planData?: any, mealPlan?: any) => {
     let basePrice, subtotal, total;
-    
+
     // Use database plan selection first, then fallback to other sources
     if (planData && planData.plan_price) {
       basePrice = Number(planData.plan_price);
@@ -338,7 +363,7 @@ export default function Checkout() {
                   <p>{userProfile?.address || "Address not provided"}</p>
                   <p>{userProfile?.phone || "Phone not provided"}</p>
                 </div>
-                
+
                 {/* Special Instructions in Delivery Section */}
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -406,7 +431,7 @@ export default function Checkout() {
                   </div>
                 )}
               </div>
-              
+
               {/* Nutrition Summary */}
               <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -428,7 +453,7 @@ export default function Checkout() {
                 </div>
               </div>
             </div>
-            
+
             {/* RIGHT */}
             <div className="space-y-6">
               {/* Order Summary */}
@@ -439,8 +464,15 @@ export default function Checkout() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">
-                      {userPlanSelection?.plan_name || selectedPlan?.name || mealPlan?.name || "Custom Plan"} (
-                      {userPlanSelection?.billing_cycle || selectedPlan?.duration || mealPlan?.duration || "1 week"}
+                      {userPlanSelection?.plan_name ||
+                        selectedPlan?.name ||
+                        mealPlan?.name ||
+                        "Custom Plan"}{" "}
+                      (
+                      {userPlanSelection?.billing_cycle ||
+                        selectedPlan?.duration ||
+                        mealPlan?.duration ||
+                        "1 week"}
                       )
                     </span>
                     <span>${pricing?.subtotal?.toFixed(2) || "50.00"}</span>
@@ -464,7 +496,7 @@ export default function Checkout() {
                   </p>
                 </div>
               </div>
-              
+
               {/* Payment Section */}
               <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
@@ -500,7 +532,8 @@ export default function Checkout() {
                   </Elements>
                 ) : clientSecretError ? (
                   <div className="py-8 text-center text-red-500 font-medium">
-                    Error loading payment form:<br />
+                    Error loading payment form:
+                    <br />
                     {clientSecretError}
                   </div>
                 ) : (

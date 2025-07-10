@@ -3,7 +3,6 @@ import cors from "cors";
 import Stripe from "stripe";
 import path from "path";
 import { fileURLToPath } from "url";
-import createPaymentIntentHandler from "./api/create-payment-intent.js";
 
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY ||
@@ -24,21 +23,49 @@ app.get("/api/health-check", (req, res) => {
   res.json({ success: true, message: "Backend is working!" });
 });
 
+app.use((req, res, next) => {
+  console.log("API call:", req.method, req.originalUrl);
+  next();
+});
+
 // API Routes
 app.post("/api/create-payment-intent", async (req, res) => {
-  console.log("Payment intent route hit with body:", req.body);
   try {
-    await createPaymentIntentHandler(req, res);
-  } catch (error) {
-    console.error("Error in payment intent handler:", error);
-    res.status(500).json({ error: "Internal server error", details: error.message });
+    const { planName, amount, planId, customerEmail, userId, mealCount } =
+      req.body;
+    if (!amount || amount < 50)
+      return res.status(400).json({ error: "Invalid amount" });
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount),
+      currency: "aud",
+      description: `SpiceFit ${planName} - Healthy meal delivery`,
+      receipt_email: customerEmail,
+      metadata: {
+        planId: planId || "",
+        planName: planName || "",
+        userId: userId || "",
+        mealCount: (mealCount || 0).toString(),
+      },
+    });
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to create payment intent", details: err.message });
   }
+});
+
+app.get("/api/health-check", (req, res) => {
+  res.json({ ok: true, now: new Date().toISOString() });
 });
 
 // Add error handling middleware
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
-  res.status(500).json({ error: "Internal server error", details: err.message });
+  res
+    .status(500)
+    .json({ error: "Internal server error", details: err.message });
 });
 
 app.use(express.static("dist"));

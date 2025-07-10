@@ -1,0 +1,90 @@
+What’s Happening?
+That "Hmm... We couldn't reach this app" page is from Replit when your backend is not running or is not serving traffic on the right port.
+
+You should only have ONE process running your backend on your assigned port!
+
+You are running both npm run dev (which likely runs Vite/dev server for your frontend) AND node server.js (which runs your backend API server).
+
+How Should This Work on Replit?
+For Full Stack:
+Frontend (Vite/React) runs on one port (usually 5173 or similar).
+
+Backend (Node/Express) runs on another port (typically 3000 or 3001).
+
+Replit exposes ONE of these ports as your project’s "public" URL.
+
+Usually you want your backend (server.js) to be the thing running on the Replit main port, with your frontend making API calls to it via the public URL (the VITE_API_URL you’ve set).
+
+What You Should Do
+1. Run Only the Backend Server for Public Access
+Start ONLY your backend (node server.js or npm start if your package.json is set up for that)
+
+Don’t run the Vite dev server on Replit’s main port!
+The backend is the "gatekeeper" and can also serve your frontend’s production build from dist/ if you build it.
+
+2. Local Development (recommended approach)
+When working locally (on your own computer), it’s fine to run two servers: Vite for frontend, Express for backend, with your frontend proxying API requests to the backend.
+
+On Replit, just run the backend (server.js) which can serve your frontend’s static build (from the dist directory, if you’ve done a vite build).
+
+3. When You See That Error
+It means the port Replit expects your app to use is not being served by any running process.
+
+Make sure you are not running both dev servers, and make sure your backend is actually listening on the port Replit expects.
+
+How to Fix / What to Do Next
+A. On Replit, do this:
+Stop all running processes.
+
+In the Replit shell/console, run:
+
+bash
+Copy
+Edit
+node server.js
+or
+
+bash
+Copy
+Edit
+npm start
+(if your package.json has a start script that runs node server.js).
+
+Wait for the log:
+
+arduino
+Copy
+Edit
+✅ Server running on port 3001
+🌍 Access at: http://0.0.0.0:3001
+Copy your Replit public URL (it will look like https://fced7515-...riker.replit.dev).
+
+Set your frontend’s VITE_API_URL to this URL.
+(You already did this, just double-check!)
+
+B. To Serve Frontend with Backend on Replit:
+If you want to serve your React app as well, first build your frontend:
+
+bash
+Copy
+Edit
+npm run build
+This creates a dist/ directory.
+
+Your backend already has app.use(express.static("dist")), which will serve your built frontend from the same URL!
+
+C. How to Test
+Open your public Replit URL in your browser.
+If it loads your app, the backend is serving both API and frontend.
+
+Try your POST request to /api/create-payment-intent again, either from your React app or Postman.
+
+Summary Checklist
+ Run only the backend server (not Vite dev server) on Replit.
+
+ Make sure you’ve built the frontend into dist/ and that app.use(express.static("dist")) is present.
+
+ Your API endpoint /api/create-payment-intent should now be accessible via POST.
+
+ Frontend should use the public Replit URL as VITE_API_URL.
+
