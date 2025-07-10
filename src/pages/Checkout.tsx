@@ -201,7 +201,7 @@ export default function Checkout() {
 
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/create-payment-intent`,
+            "/api/create-payment-intent",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -216,8 +216,6 @@ export default function Checkout() {
               }),
             },
           );
-          console.log("VITE_API_URL is", import.meta.env.VITE_API_URL);
-
           console.log("Payment intent response status:", response.status);
 
           if (response.ok) {

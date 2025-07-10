@@ -68,8 +68,6 @@ app.use((err, req, res, next) => {
     .json({ error: "Internal server error", details: err.message });
 });
 
-app.use(express.static("dist"));
-
 // Create checkout session endpoint
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
@@ -200,14 +198,17 @@ app.get("/api/payment-status/:sessionId", async (req, res) => {
   }
 });
 
+// Serve static files from dist directory
+app.use(express.static("dist"));
+
 // Serve React app for all other routes
-// app.get('*', (req, res) => {
-//   // Avoid serving for API routes
-//   if (req.path.startsWith('/api/')) {
-//     return res.status(404).json({ error: 'API endpoint not found' });
-//   }
-//   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-// });
+app.get('*', (req, res) => {
+  // Avoid serving for API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 app.listen(PORT, "0.0.0.0", (err) => {
   if (err) {

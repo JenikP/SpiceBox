@@ -19,7 +19,7 @@ localPort = 5174
 externalPort = 3000
 
 [workflows]
-runButton = "Start Application"
+runButton = "Production Server"
 
 [[workflows.workflow]]
 name = "Start Application"
@@ -37,3 +37,20 @@ args = "node server.js &"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Production Server"
+author = 44702001
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server.js"
