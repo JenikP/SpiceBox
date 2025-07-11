@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "../components/Layout";
@@ -34,39 +33,39 @@ const Contact = () => {
   // AI response generator
   const generateAIResponse = (userMessage: string): string => {
     const message = userMessage.toLowerCase();
-    
+
     if (message.includes("meal") || message.includes("food") || message.includes("diet")) {
       return "Our meals are freshly prepared daily with authentic Indian spices and designed for weight loss. We offer vegetarian, non-vegetarian, vegan, and keto options. Would you like to know more about our meal plans?";
     }
-    
+
     if (message.includes("price") || message.includes("cost") || message.includes("subscription")) {
       return "Our plans start from $89/week for 14 meals. We offer flexible subscriptions with no lock-in contracts. You can pause or cancel anytime. Would you like me to help you choose the right plan?";
     }
-    
+
     if (message.includes("delivery") || message.includes("shipping")) {
       return "We deliver fresh meals every morning to your doorstep across major Australian cities. Delivery is free on all plans and we use insulated packaging to keep your meals fresh.";
     }
-    
+
     if (message.includes("weight loss") || message.includes("lose weight")) {
       return "Our meals are scientifically designed for weight loss with controlled calories and high protein. Many customers lose 2-4kg in their first month! Each meal includes nutritional information to track your progress.";
     }
-    
+
     if (message.includes("ingredients") || message.includes("allergen") || message.includes("allergy")) {
       return "We use fresh, authentic Indian ingredients and spices. During signup, you can specify any allergies or dietary restrictions. All our meals include detailed ingredient lists and allergen information.";
     }
-    
+
     if (message.includes("cancel") || message.includes("pause") || message.includes("subscription")) {
       return "You can pause or cancel your subscription anytime through your profile page or by contacting us. There are no cancellation fees or lock-in contracts. We're here to support your journey!";
     }
-    
+
     if (message.includes("hello") || message.includes("hi") || message.includes("hey")) {
       return "Hello! Welcome to SpiceBox! I'm here to help you with any questions about our healthy Indian meal delivery service. What would you like to know?";
     }
-    
+
     if (message.includes("thank") || message.includes("thanks")) {
       return "You're welcome! Is there anything else I can help you with regarding SpiceBox meals or your health journey?";
     }
-    
+
     // Default response
     return "I'm here to help with any questions about SpiceBox! You can ask me about our meals, pricing, delivery, weight loss programs, or anything else. If you need more detailed assistance, feel free to fill out our contact form or call us at 1800 SPICEBOX.";
   };
@@ -93,7 +92,7 @@ const Contact = () => {
         isAI: true,
         timestamp: new Date()
       };
-      
+
       setChatMessages(prev => [...prev, aiResponse]);
       setIsTyping(false);
     }, 1000 + Math.random() * 2000); // 1-3 seconds delay
@@ -224,7 +223,7 @@ const Contact = () => {
               We'd love to hear from you. Fill out the form below and we'll get back to you as soon as possible.
             </p>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -264,7 +263,7 @@ const Contact = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
@@ -301,7 +300,7 @@ const Contact = () => {
                   </select>
                 </div>
               </div>
-              
+
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
                   Message *
@@ -317,7 +316,7 @@ const Contact = () => {
                   placeholder="Tell us how we can help you..."
                 />
               </div>
-              
+
               <button
                 type="submit"
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-8 rounded-lg font-bold text-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
@@ -344,7 +343,7 @@ const Contact = () => {
               Find quick answers to common questions about SpiceBox
             </p>
           </motion.div>
-          
+
           <div className="space-y-6">
             {faqs.map((faq, index) => (
               <motion.div
@@ -447,7 +446,7 @@ const Contact = () => {
                     </div>
                   </div>
                 ))}
-                
+
                 {isTyping && (
                   <div className="flex justify-start">
                     <div className="bg-gray-100 p-3 rounded-2xl">
@@ -529,7 +528,7 @@ const Contact = () => {
               </motion.svg>
             )}
           </AnimatePresence>
-          
+
           {/* Notification dot for new messages */}
           {!isChatOpen && (
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>

@@ -335,28 +335,46 @@ const Profile = () => {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h3>
                 <div className="space-y-4">
-                  {orders.slice(0, 3).map((order, index) => (
-                    <div key={order.id} className="flex items-center space-x-4 p-3 bg-green-50 rounded-lg">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div>
-                        <div className="font-medium text-gray-900">Plan: {order.plan_name}</div>
-                        <div className="text-sm text-gray-600">
-                          Order #{order.order_number} • {new Date(order.created_at).toLocaleDateString()}
+                  {orders.slice(0, 3).map((order, index) => {
+                    const isActive = order.status === 'confirmed' && 
+                      new Date(order.created_at).getTime() > Date.now() - (30 * 24 * 60 * 60 * 1000); // Last 30 days
+                    return (
+                      <div key={order.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                        <div className="flex items-center space-x-4">
+                          <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                          <div>
+                            <div className="font-medium text-gray-900">Plan: {order.plan_name}</div>
+                            <div className="text-sm text-gray-600">
+                              Purchased on {new Date(order.created_at).toLocaleDateString()} • ${order.total_amount}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            isActive 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {isActive ? 'Active' : 'Completed'}
+                          </span>
+                          {isActive && (
+                            <span className="text-xs text-green-600 mt-1">
+                              {Math.ceil((Date.now() - new Date(order.created_at).getTime()) / (24 * 60 * 60 * 1000))} days ago
+                            </span>
+                          )}
                         </div>
                       </div>
+                    );
+                  })}
+                  {orders.length === 0 && (
+                    <div className="text-center py-6">
+                      <div className="text-4xl mb-2">📋</div>
+                      <p className="text-gray-500">No purchased plans yet</p>
+                      <button className="mt-2 text-orange-600 hover:text-orange-700 font-medium">
+                        Browse Plans
+                      </button>
                     </div>
-                  ))}
-                  {weeklyMeals.slice(0, 2).map((meal, index) => (
-                    <div key={meal.id} className="flex items-center space-x-4 p-3 bg-blue-50 rounded-lg">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <div>
-                        <div className="font-medium text-gray-900">Meal selected: {meal.name}</div>
-                        <div className="text-sm text-gray-600">
-                          Day {meal.day_index + 1} • {meal.quantity} portion(s)
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -392,26 +410,41 @@ const Profile = () => {
 
                     {weeklyMeals.length > 0 && (
                       <div>
-                        <h4 className="text-lg font-bold text-gray-900 mb-4">Your Selected Meals</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {weeklyMeals.slice(0, 6).map((meal, index) => (
-                            <div key={`${meal.meal_id}-${index}`} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                              <img
-                                src={meal.image || "/placeholder-meal.jpg"}
-                                alt={meal.name}
-                                className="w-12 h-12 rounded-lg object-cover"
-                              />
-                              <div className="flex-1">
-                                <p className="font-medium text-sm text-gray-900">{meal.name}</p>
-                                <p className="text-xs text-gray-500">Day {meal.day_index + 1} • Qty: {meal.quantity}</p>
+                        <h4 className="text-lg font-bold text-gray-900 mb-4">Your Weekly Meal Plan</h4>
+                        <div className="space-y-6">
+                          {Array.from({ length: 7 }, (_, dayIndex) => {
+                            const dayMeals = weeklyMeals.filter(meal => meal.day_index === dayIndex);
+                            const dayName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex];
+                            
+                            if (dayMeals.length === 0) return null;
+                            
+                            return (
+                              <div key={dayIndex} className="border border-gray-200 rounded-lg p-4">
+                                <h5 className="font-bold text-lg text-gray-800 mb-3 flex items-center">
+                                  <span className="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
+                                  {dayName}
+                                </h5>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {dayMeals.map((meal, index) => (
+                                    <div key={`${meal.meal_id}-${index}`} className="flex items-center space-x-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                      <img
+                                        src={meal.image || "/placeholder-meal.jpg"}
+                                        alt={meal.name}
+                                        className="w-16 h-16 rounded-lg object-cover"
+                                      />
+                                      <div className="flex-1">
+                                        <p className="font-medium text-sm text-gray-900">{meal.name}</p>
+                                        <p className="text-xs text-gray-600">{meal.category}</p>
+                                        <p className="text-xs text-orange-600 font-medium">
+                                          {meal.calories} cal • Qty: {meal.quantity}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                          {weeklyMeals.length > 6 && (
-                            <div className="p-3 bg-gray-100 rounded-lg text-center">
-                              <p className="text-sm text-gray-600">+{weeklyMeals.length - 6} more meals</p>
-                            </div>
-                          )}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -448,19 +481,20 @@ const Profile = () => {
                 <div className="space-y-4">
                   {orders.map((order) => (
                     <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
                         <div>
-                          <div className="font-bold text-gray-900">{order.order_number}</div>
+                          <div className="font-bold text-gray-900">Order #{order.order_number || order.id}</div>
                           <div className="text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</div>
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{order.plan_name}</div>
-                          <div className="text-sm text-gray-600">{order.plan_duration}</div>
+                          <div className="text-sm text-gray-600">{order.plan_duration || 'Monthly Plan'}</div>
                         </div>
                         <div>
                           <div className="font-bold text-gray-900">${order.total_amount}</div>
+                          <div className="text-xs text-gray-500">Payment Completed</div>
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div>
                           <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                             order.status === 'confirmed' 
                               ? 'bg-green-100 text-green-800' 
@@ -468,8 +502,16 @@ const Profile = () => {
                           }`}>
                             {order.status}
                           </div>
-                          <button className="text-orange-600 hover:text-orange-700 font-medium">
-                            View Details
+                          <div className="text-xs text-gray-500 mt-1">
+                            {order.billing_cycle || 'One-time'}
+                          </div>
+                        </div>
+                        <div className="flex flex-col space-y-2">
+                          <button className="text-orange-600 hover:text-orange-700 font-medium text-sm">
+                            View Receipt
+                          </button>
+                          <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                            Reorder
                           </button>
                         </div>
                       </div>

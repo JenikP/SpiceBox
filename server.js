@@ -68,6 +68,55 @@ app.use((err, req, res, next) => {
     .json({ error: "Internal server error", details: err.message });
 });
 
+// Chat endpoint for ChatGPT integration
+app.post("/api/chat", async (req, res) => {
+  const { message, context } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: context || 'You are a helpful assistant for SpiceBox, a healthy meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly and informative.'
+          },
+          {
+            role: 'user',
+            content: message
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const reply = data.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+
+    res.status(200).json({ reply });
+  } catch (error) {
+    console.error('ChatGPT API error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process request',
+      details: error.message 
+    });
+  }
+});
+
 // Create checkout session endpoint
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
