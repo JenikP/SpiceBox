@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY ||
-    "***REMOVED***51QYuE7Kt5CDCQ1bVGJOCp96xhKGcq6LLcaL8wRsIfKYcPZrq2FNS0Tr0seBuOwR0z1FtF3MuFxNKQoQQEmpHYCx000Y2zKlE7v",
+    "***REMOVED***51RfckJE6vfmHs239tTjsBILgAAg5ubIDm1lzGzwendUxW5MbRO8l3VJprWhFwebqfIQQ8Q9LNm3sOZHX8u3eWiM3006O1uHom1",
 );
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -201,13 +201,12 @@ app.get("/api/payment-status/:sessionId", async (req, res) => {
 // Serve static files from dist directory
 app.use(express.static("dist"));
 
-// Serve React app for all other routes
-app.get('*', (req, res) => {
-  // Avoid serving for API routes
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
+// Serve React app for all other non-API routes
+app.get("/*", (req, res) => {
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "API endpoint not found" });
   }
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 app.listen(PORT, "0.0.0.0", (err) => {

@@ -16,7 +16,10 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 
 // Always use VITE_STRIPE_PUBLISHABLE_KEY
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+    "***REMOVED***51RfckJE6vfmHs239tTjsBILgAAg5ubIDm1lzGzwendUxW5MbRO8l3VJprWhFwebqfIQQ8Q9LNm3sOZHX8u3eWiM3006O1uHom1",
+);
 
 // Validation schema for email and special instructions
 const checkoutSchema = z.object({
@@ -200,22 +203,19 @@ export default function Checkout() {
         console.log("Pricing data:", pricing);
 
         try {
-          const response = await fetch(
-            "/api/create-payment-intent",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                planName:
-                  planToUse?.plan_name || planToUse?.name || "Custom Plan",
-                amount: Math.round((pricing?.total || 50) * 100),
-                planId: planToUse?.plan_id || planToUse?.id || "custom",
-                customerEmail: profile?.email || authUser.email,
-                userId: authUser.id,
-                mealCount: weeklyMeals?.length || 0,
-              }),
-            },
-          );
+          const response = await fetch("/api/create-payment-intent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              planName:
+                planToUse?.plan_name || planToUse?.name || "Custom Plan",
+              amount: Math.round((pricing?.total || 50) * 100),
+              planId: planToUse?.plan_id || planToUse?.id || "custom",
+              customerEmail: profile?.email || authUser.email,
+              userId: authUser.id,
+              mealCount: weeklyMeals?.length || 0,
+            }),
+          });
           console.log("Payment intent response status:", response.status);
 
           if (response.ok) {
