@@ -1,10 +1,33 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../utils/supabaseClient";
 
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    navigate('/');
+  };
 
   const navItems = [
     { name: "Home", path: "/" },
@@ -38,7 +61,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden lg:flex space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -54,8 +77,25 @@ const Header = () => {
             ))}
           </nav>
 
+          {/* Tablet Navigation - Horizontal scrollable */}
+          <nav className="hidden md:flex lg:hidden overflow-x-auto scrollbar-hide space-x-4 max-w-md">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`text-xs font-medium transition-colors hover:text-orange-600 whitespace-nowrap px-2 py-1 ${
+                  location.pathname === item.path
+                    ? "text-orange-600 border-b-2 border-orange-600"
+                    : "text-gray-700"
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden lg:hidden">
             <button
               onClick={toggleMobileMenu}
               className="p-2 rounded-md text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-colors"
@@ -79,22 +119,38 @@ const Header = () => {
             </button>
           </div>
 
-          {/* Desktop CTA Button */}
-          <Link
-            to="/enter-details"
-            className="hidden md:block bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-full font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
-          >
-            Start Your Plan
-          </Link>
+          {/* Desktop Auth Buttons */}
+          <div className="hidden lg:flex items-center space-x-4">
+            {user ? (
+              <>
+                <span className="text-sm text-gray-600">
+                  Welcome, {user.email?.split('@')[0]}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full font-medium hover:bg-gray-300 transition-all duration-300"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/enter-details"
+                className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-full font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
+              >
+                Start Your Plan
+              </Link>
+            )}
+          </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile & Tablet Navigation Menu */}
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-gray-200 py-4"
+            className="lg:hidden border-t border-gray-200 py-4"
           >
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
@@ -111,13 +167,30 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
-              <Link
-                to="/enter-details"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="mx-4 mt-4 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full font-semibold text-center hover:from-orange-600 hover:to-red-600 transition-all duration-300"
-              >
-                Start Your Plan
-              </Link>
+              {user ? (
+                <div className="mx-4 mt-4 space-y-2">
+                  <div className="text-sm text-gray-600 text-center">
+                    Welcome, {user.email?.split('@')[0]}
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-full font-semibold text-center hover:bg-gray-300 transition-all duration-300"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/enter-details"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="mx-4 mt-4 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full font-semibold text-center hover:from-orange-600 hover:to-red-600 transition-all duration-300"
+                >
+                  Start Your Plan
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

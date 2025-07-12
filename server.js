@@ -211,11 +211,42 @@ app.post(
       console.log("Customer email:", session.customer_email);
       console.log("Metadata:", session.metadata);
 
-      // Here you would typically:
-      // 1. Save the order to your database
-      // 2. Send confirmation email
-      // 3. Update user's meal plan status
-      // 4. Trigger fulfillment process
+      // Save order to Supabase
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(
+          process.env.VITE_SUPABASE_URL || 'https://hwwrzlxgnhsawxaswqjm.supabase.co',
+          process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3d3J6bHhnbmhzYXd4YXN3cWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3ODI4ODQsImV4cCI6MjA2NzM1ODg4NH0.i9zCJFHoI_wR2VBZGNXwdHKPSmYG0tY6oexKN64c5cw'
+        );
+
+        const orderData = {
+          user_id: session.metadata?.userId || null,
+          order_number: `SPB-${Date.now()}`,
+          stripe_session_id: session.id,
+          status: 'confirmed',
+          total_amount: session.amount_total / 100, // Convert cents to dollars
+          currency: session.currency.toUpperCase(),
+          plan_name: session.metadata?.planName || 'Unknown Plan',
+          plan_id: session.metadata?.planId || null,
+          plan_duration: session.metadata?.planDuration || null,
+          billing_cycle: session.metadata?.billingCycle || 'one-time',
+          meal_count: parseInt(session.metadata?.mealCount || '0'),
+          customer_email: session.customer_email,
+          special_instructions: session.metadata?.specialInstructions || null
+        };
+
+        const { error } = await supabase
+          .from('orders')
+          .insert([orderData]);
+
+        if (error) {
+          console.error('Error saving order to database:', error);
+        } else {
+          console.log('Order saved successfully:', orderData.order_number);
+        }
+      } catch (dbError) {
+        console.error('Database connection error:', dbError);
+      }
     }
 
     // Handle payment intent succeeded

@@ -335,31 +335,63 @@ const Profile = () => {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h3>
                 <div className="space-y-4">
-                  {orders.slice(0, 3).map((order, index) => {
-                    const isActive = order.status === 'confirmed' && 
-                      new Date(order.created_at).getTime() > Date.now() - (30 * 24 * 60 * 60 * 1000); // Last 30 days
+                  {orders.slice(0, 5).map((order, index) => {
+                    // Determine if plan is active based on plan duration and purchase date
+                    const purchaseDate = new Date(order.created_at);
+                    const currentDate = new Date();
+                    const daysSincePurchase = Math.floor((currentDate.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    let planDurationDays = 30; // Default to 30 days
+                    if (order.plan_duration) {
+                      if (order.plan_duration.includes('14 days')) planDurationDays = 14;
+                      else if (order.plan_duration.includes('30 days')) planDurationDays = 30;
+                      else if (order.plan_duration.includes('4 months')) planDurationDays = 120;
+                    }
+                    
+                    const isActive = order.status === 'confirmed' && daysSincePurchase <= planDurationDays;
+                    const daysRemaining = Math.max(0, planDurationDays - daysSincePurchase);
+                    
                     return (
-                      <div key={order.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                      <div key={order.id} className={`flex items-center justify-between p-4 rounded-lg border ${
+                        isActive 
+                          ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
+                          : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'
+                      }`}>
                         <div className="flex items-center space-x-4">
-                          <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                            isActive ? 'bg-green-500' : 'bg-gray-400'
+                          }`}>
+                            {isActive && <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>}
+                          </div>
                           <div>
-                            <div className="font-medium text-gray-900">Plan: {order.plan_name}</div>
+                            <div className="font-medium text-gray-900">{order.plan_name}</div>
                             <div className="text-sm text-gray-600">
-                              Purchased on {new Date(order.created_at).toLocaleDateString()} • ${order.total_amount}
+                              Purchased {new Date(order.created_at).toLocaleDateString()} • ${Number(order.total_amount).toFixed(2)}
+                              {order.meal_count > 0 && ` • ${order.meal_count} meals`}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Order #{order.order_number || `SPB-${order.id}`}
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end">
+                        <div className="flex flex-col items-end space-y-1">
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                             isActive 
                               ? 'bg-green-100 text-green-800' 
+                              : order.status === 'confirmed'
+                              ? 'bg-blue-100 text-blue-800'
                               : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {isActive ? 'Active' : 'Completed'}
+                            {isActive ? 'Active' : order.status === 'confirmed' ? 'Completed' : order.status}
                           </span>
                           {isActive && (
-                            <span className="text-xs text-green-600 mt-1">
-                              {Math.ceil((Date.now() - new Date(order.created_at).getTime()) / (24 * 60 * 60 * 1000))} days ago
+                            <span className="text-xs text-green-600">
+                              {daysRemaining} days remaining
+                            </span>
+                          )}
+                          {!isActive && order.status === 'confirmed' && (
+                            <span className="text-xs text-gray-500">
+                              Expired {daysSincePurchase - planDurationDays} days ago
                             </span>
                           )}
                         </div>
@@ -367,10 +399,14 @@ const Profile = () => {
                     );
                   })}
                   {orders.length === 0 && (
-                    <div className="text-center py-6">
+                    <div className="text-center py-8">
                       <div className="text-4xl mb-2">📋</div>
-                      <p className="text-gray-500">No purchased plans yet</p>
-                      <button className="mt-2 text-orange-600 hover:text-orange-700 font-medium">
+                      <p className="text-gray-500 mb-3">No purchased plans yet</p>
+                      <p className="text-sm text-gray-400 mb-4">Your recent plan purchases and activity will appear here</p>
+                      <button 
+                        onClick={() => window.location.href = '/plan'}
+                        className="text-orange-600 hover:text-orange-700 font-medium bg-orange-50 px-4 py-2 rounded-lg hover:bg-orange-100 transition-colors"
+                      >
                         Browse Plans
                       </button>
                     </div>
@@ -472,56 +508,80 @@ const Profile = () => {
             >
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">Order History</h3>
-                  <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-200">
-                    Reorder
-                  </button>
+                  <h3 className="text-2xl font-bold text-gray-900">Payment History</h3>
+                  <div className="text-sm text-gray-600">
+                    Total Orders: {orders.length}
+                  </div>
                 </div>
 
                 <div className="space-y-4">
                   {orders.map((order) => (
                     <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                        <div>
-                          <div className="font-bold text-gray-900">Order #{order.order_number || order.id}</div>
+                      <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-center">
+                        <div className="lg:col-span-1">
+                          <div className="font-bold text-gray-900">#{order.order_number || `ORD-${order.id}`}</div>
                           <div className="text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</div>
                         </div>
-                        <div>
+                        <div className="lg:col-span-2">
                           <div className="font-medium text-gray-900">{order.plan_name}</div>
-                          <div className="text-sm text-gray-600">{order.plan_duration || 'Monthly Plan'}</div>
+                          <div className="text-sm text-gray-600">
+                            {order.plan_duration && `Duration: ${order.plan_duration}`}
+                            {order.meal_count > 0 && ` • ${order.meal_count} meals`}
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-bold text-gray-900">${order.total_amount}</div>
-                          <div className="text-xs text-gray-500">Payment Completed</div>
+                        <div className="lg:col-span-1">
+                          <div className="font-bold text-gray-900">${Number(order.total_amount).toFixed(2)} {order.currency}</div>
+                          <div className="text-xs text-gray-500">
+                            {order.billing_cycle === 'one-time' ? 'One-time Payment' : `${order.billing_cycle} billing`}
+                          </div>
                         </div>
-                        <div>
+                        <div className="lg:col-span-1">
                           <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                             order.status === 'confirmed' 
                               ? 'bg-green-100 text-green-800' 
-                              : 'bg-orange-100 text-orange-800'
+                              : order.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {order.status}
+                            {order.status === 'confirmed' ? 'Paid' : order.status}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            {order.billing_cycle || 'One-time'}
+                            {order.stripe_session_id ? 'Card Payment' : 'Payment Method'}
                           </div>
                         </div>
-                        <div className="flex flex-col space-y-2">
-                          <button className="text-orange-600 hover:text-orange-700 font-medium text-sm">
-                            View Receipt
-                          </button>
-                          <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
-                            Reorder
-                          </button>
+                        <div className="lg:col-span-1">
+                          <div className="flex flex-col space-y-1">
+                            <button className="text-orange-600 hover:text-orange-700 font-medium text-sm">
+                              View Details
+                            </button>
+                            {order.status === 'confirmed' && (
+                              <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                                Download Receipt
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      {order.special_instructions && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <div className="text-sm text-gray-600">
+                            <strong>Instructions:</strong> {order.special_instructions}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {orders.length === 0 && (
-                    <div className="text-center py-8">
-                      <div className="text-6xl mb-4">📦</div>
-                      <h4 className="text-xl font-bold text-gray-900 mb-2">No Orders Yet</h4>
-                      <p className="text-gray-600">Your order history will appear here once you make your first purchase.</p>
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4">💳</div>
+                      <h4 className="text-xl font-bold text-gray-900 mb-2">No Payments Yet</h4>
+                      <p className="text-gray-600 mb-4">Your payment history will appear here once you make your first purchase.</p>
+                      <button 
+                        onClick={() => window.location.href = '/plan'}
+                        className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300"
+                      >
+                        Browse Plans
+                      </button>
                     </div>
                   )}
                 </div>

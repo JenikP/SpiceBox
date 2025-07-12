@@ -1,4 +1,3 @@
-
 -- Enhanced order tracking
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_number VARCHAR(50);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'pending';
@@ -66,3 +65,35 @@ CREATE TRIGGER generate_order_number_trigger
 UPDATE orders 
 SET order_number = 'SPB-' || TO_CHAR(created_at, 'YYYYMMDD') || '-' || LPAD(CAST(EXTRACT(EPOCH FROM created_at) AS TEXT), 6, '0')
 WHERE order_number IS NULL;
+
+-- Add billing_cycle column to orders table
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS billing_cycle VARCHAR(50) DEFAULT 'one-time';
+
+-- Add plan_duration column to orders table  
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan_duration VARCHAR(50);
+
+-- Update weekly_meal_plan table structure
+ALTER TABLE weekly_meal_plan ADD COLUMN IF NOT EXISTS day_index INTEGER;
+ALTER TABLE weekly_meal_plan ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
+
+-- Update the constraint to use day_index instead of day_of_week
+ALTER TABLE weekly_meal_plan DROP CONSTRAINT IF EXISTS weekly_meal_plan_day_of_week_check;
+ALTER TABLE weekly_meal_plan ADD CONSTRAINT weekly_meal_plan_day_index_check CHECK (day_index >= 0 AND day_index <= 6);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_weekly_meal_plan_user_id ON weekly_meal_plan(user_id);
+CREATE INDEX IF NOT EXISTS idx_weekly_meal_plan_day_index ON weekly_meal_plan(day_index);
+
+-- Enable RLS for orders table
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for orders
+CREATE POLICY "Users can view their own orders" ON orders
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Create policy for service role to insert orders (for webhook)
+CREATE POLICY "Service role can insert orders" ON orders
+  FOR INSERT WITH CHECK (true);
