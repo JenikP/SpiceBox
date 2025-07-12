@@ -30,44 +30,31 @@ const Contact = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  // AI response generator
-  const generateAIResponse = (userMessage: string): string => {
-    const message = userMessage.toLowerCase();
+  // AI response generator using Gemini API
+  const generateAIResponse = async (userMessage: string): Promise<string> => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          context: 'You are a helpful assistant for SpiceBox, a healthy Indian meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly, informative, and under 150 words. Focus on our authentic Indian cuisine designed for weight loss, flexible subscription plans, fresh daily delivery across Australia, and personalized meal options for vegetarian, non-vegetarian, vegan, and keto diets.'
+        }),
+      });
 
-    if (message.includes("meal") || message.includes("food") || message.includes("diet")) {
-      return "Our meals are freshly prepared daily with authentic Indian spices and designed for weight loss. We offer vegetarian, non-vegetarian, vegan, and keto options. Would you like to know more about our meal plans?";
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.reply || "I'm here to help with any questions about SpiceBox! You can ask me about our meals, pricing, delivery, weight loss programs, or anything else.";
+    } catch (error) {
+      console.error('Error calling AI API:', error);
+      // Fallback to local response if API fails
+      return "I'm here to help with any questions about SpiceBox! Our meals are freshly prepared with authentic Indian spices, designed for weight loss, and delivered daily across Australia. Feel free to ask about our plans, pricing, or dietary options!";
     }
-
-    if (message.includes("price") || message.includes("cost") || message.includes("subscription")) {
-      return "Our plans start from $89/week for 14 meals. We offer flexible subscriptions with no lock-in contracts. You can pause or cancel anytime. Would you like me to help you choose the right plan?";
-    }
-
-    if (message.includes("delivery") || message.includes("shipping")) {
-      return "We deliver fresh meals every morning to your doorstep across major Australian cities. Delivery is free on all plans and we use insulated packaging to keep your meals fresh.";
-    }
-
-    if (message.includes("weight loss") || message.includes("lose weight")) {
-      return "Our meals are scientifically designed for weight loss with controlled calories and high protein. Many customers lose 2-4kg in their first month! Each meal includes nutritional information to track your progress.";
-    }
-
-    if (message.includes("ingredients") || message.includes("allergen") || message.includes("allergy")) {
-      return "We use fresh, authentic Indian ingredients and spices. During signup, you can specify any allergies or dietary restrictions. All our meals include detailed ingredient lists and allergen information.";
-    }
-
-    if (message.includes("cancel") || message.includes("pause") || message.includes("subscription")) {
-      return "You can pause or cancel your subscription anytime through your profile page or by contacting us. There are no cancellation fees or lock-in contracts. We're here to support your journey!";
-    }
-
-    if (message.includes("hello") || message.includes("hi") || message.includes("hey")) {
-      return "Hello! Welcome to SpiceBox! I'm here to help you with any questions about our healthy Indian meal delivery service. What would you like to know?";
-    }
-
-    if (message.includes("thank") || message.includes("thanks")) {
-      return "You're welcome! Is there anything else I can help you with regarding SpiceBox meals or your health journey?";
-    }
-
-    // Default response
-    return "I'm here to help with any questions about SpiceBox! You can ask me about our meals, pricing, delivery, weight loss programs, or anything else. If you need more detailed assistance, feel free to fill out our contact form or call us at 1800 SPICEBOX.";
   };
 
   const handleSendMessage = async () => {
@@ -80,22 +67,35 @@ const Contact = () => {
       timestamp: new Date()
     };
 
+    const currentMessage = newMessage;
     setChatMessages(prev => [...prev, userMessage]);
     setNewMessage("");
     setIsTyping(true);
 
-    // Simulate AI thinking time
-    setTimeout(() => {
+    try {
+      // Get AI response
+      const aiResponseText = await generateAIResponse(currentMessage);
+      
       const aiResponse = {
         id: Date.now() + 1,
-        text: generateAIResponse(newMessage),
+        text: aiResponseText,
         isAI: true,
         timestamp: new Date()
       };
 
       setChatMessages(prev => [...prev, aiResponse]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      const errorResponse = {
+        id: Date.now() + 1,
+        text: "I'm sorry, I'm having trouble responding right now. Please try again or contact our support team directly.",
+        isAI: true,
+        timestamp: new Date()
+      };
+      setChatMessages(prev => [...prev, errorResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 2000); // 1-3 seconds delay
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

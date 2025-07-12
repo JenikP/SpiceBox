@@ -68,7 +68,7 @@ app.use((err, req, res, next) => {
     .json({ error: "Internal server error", details: err.message });
 });
 
-// Chat endpoint for ChatGPT integration
+// Chat endpoint for Google Gemini integration
 app.post("/api/chat", async (req, res) => {
   const { message, context } = req.body;
 
@@ -77,39 +77,50 @@ app.post("/api/chat", async (req, res) => {
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const apiKey = process.env.GEMINI_API_KEY || 'your-gemini-api-key-here';
+    const systemPrompt = context || 'You are a helpful assistant for SpiceBox, a healthy meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly and informative.';
+    const fullPrompt = `${systemPrompt}\n\nUser: ${message}\nAssistant:`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
+        contents: [{
+          parts: [{
+            text: fullPrompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 1,
+          topP: 1,
+          maxOutputTokens: 150,
+        },
+        safetySettings: [
           {
-            role: 'system',
-            content: context || 'You are a helpful assistant for SpiceBox, a healthy meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly and informative.'
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
           },
           {
-            role: 'user',
-            content: message
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
           }
-        ],
-        max_tokens: 150,
-        temperature: 0.7,
+        ]
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const reply = data.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'I apologize, but I could not generate a response.';
 
     res.status(200).json({ reply });
   } catch (error) {
-    console.error('ChatGPT API error:', error);
+    console.error('Gemini API error:', error);
     res.status(500).json({ 
       error: 'Failed to process request',
       details: error.message 
