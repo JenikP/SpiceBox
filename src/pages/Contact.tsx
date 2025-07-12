@@ -33,6 +33,8 @@ const Contact = () => {
   // AI response generator using Gemini API
   const generateAIResponse = async (userMessage: string): Promise<string> => {
     try {
+      console.log('Sending chat request:', userMessage);
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -44,16 +46,41 @@ const Contact = () => {
         }),
       });
 
+      console.log('Chat API response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Chat API error:', errorText);
+        throw new Error(`API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
-      return data.reply || "I'm here to help with any questions about SpiceBox! You can ask me about our meals, pricing, delivery, weight loss programs, or anything else.";
+      console.log('Chat API response data:', data);
+      
+      if (data.reply) {
+        return data.reply;
+      } else {
+        throw new Error('No reply received from API');
+      }
     } catch (error) {
       console.error('Error calling AI API:', error);
-      // Fallback to local response if API fails
-      return "I'm here to help with any questions about SpiceBox! Our meals are freshly prepared with authentic Indian spices, designed for weight loss, and delivered daily across Australia. Feel free to ask about our plans, pricing, or dietary options!";
+      
+      // Provide contextual fallback responses based on user message
+      const lowerMessage = userMessage.toLowerCase();
+      
+      if (lowerMessage.includes('plan') || lowerMessage.includes('price') || lowerMessage.includes('cost')) {
+        return "We offer three main plans: Essential ($149/week), Complete ($187/week), and Transformation ($219/week). Each includes fresh Indian meals delivered daily. The Complete plan adds nutrition consultations, and Transformation includes personal training. Which plan interests you most?";
+      } else if (lowerMessage.includes('delivery') || lowerMessage.includes('deliver')) {
+        return "We deliver fresh, healthy Indian meals daily across Australia! Our meals are prepared fresh each morning in our commercial kitchen and delivered within hours. Delivery is included in all our meal plans. What area are you located in?";
+      } else if (lowerMessage.includes('diet') || lowerMessage.includes('vegetarian') || lowerMessage.includes('vegan') || lowerMessage.includes('keto')) {
+        return "We cater to all dietary preferences! Our menu includes vegetarian, non-vegetarian, vegan, and keto options. All meals are authentically Indian and nutritionally balanced for weight loss. During sign-up, you can specify your preferences and any allergies. What dietary requirements do you have?";
+      } else if (lowerMessage.includes('weight') || lowerMessage.includes('lose') || lowerMessage.includes('loss')) {
+        return "Our meals are specifically designed for sustainable weight loss using authentic Indian spices and fresh ingredients. We focus on portion control, balanced nutrition, and metabolism-boosting spices. Many customers lose 2-4kg per month. What are your weight loss goals?";
+      } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+        return "Hello! I'm here to help you learn about SpiceBox. We're Australia's premier healthy Indian meal delivery service. You can ask me about our meal plans, pricing, delivery areas, dietary options, or how our program works. What would you like to know?";
+      } else {
+        return "I'm here to help with any questions about SpiceBox! Our meals are freshly prepared with authentic Indian spices, designed for weight loss, and delivered daily across Australia. You can ask me about our plans ($149-219/week), dietary options (veg, non-veg, vegan, keto), delivery, or how we help with weight loss. What interests you most?";
+      }
     }
   };
 

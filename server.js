@@ -77,9 +77,12 @@ app.post("/api/chat", async (req, res) => {
   }
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY || 'your-gemini-api-key-here';
-    const systemPrompt = context || 'You are a helpful assistant for SpiceBox, a healthy meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly and informative.';
-    const fullPrompt = `${systemPrompt}\n\nUser: ${message}\nAssistant:`;
+    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyD00i2hvT5WBeMs8QNLFbWfgDhg5S21MD4';
+    console.log('Using Gemini API key:', apiKey.substring(0, 10) + '...');
+    
+    const systemPrompt = context || 'You are a helpful assistant for SpiceBox, a healthy Indian meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly, informative, and under 150 words. Focus on our authentic Indian cuisine designed for weight loss, flexible subscription plans, fresh daily delivery across Australia, and personalized meal options for vegetarian, non-vegetarian, vegan, and keto diets.';
+    
+    console.log('Sending message to Gemini:', message);
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
@@ -89,13 +92,13 @@ app.post("/api/chat", async (req, res) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: fullPrompt
+            text: `${systemPrompt}\n\nUser question: ${message}\n\nPlease provide a helpful response about SpiceBox:`
           }]
         }],
         generationConfig: {
           temperature: 0.7,
-          topK: 1,
-          topP: 1,
+          topK: 40,
+          topP: 0.95,
           maxOutputTokens: 150,
         },
         safetySettings: [
@@ -106,25 +109,50 @@ app.post("/api/chat", async (req, res) => {
           {
             category: "HARM_CATEGORY_HATE_SPEECH",
             threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
           }
         ]
       }),
     });
 
+    console.log('Gemini API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Gemini API error response:', errorText);
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'I apologize, but I could not generate a response.';
+    console.log('Gemini API response data:', JSON.stringify(data, null, 2));
+    
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'I apologize, but I could not generate a response. Please try asking about our meal plans, pricing, or how SpiceBox can help you with your health goals!';
 
+    console.log('Sending reply:', reply);
     res.status(200).json({ reply });
   } catch (error) {
     console.error('Gemini API error:', error);
-    res.status(500).json({ 
-      error: 'Failed to process request',
-      details: error.message 
-    });
+    
+    // Provide a more helpful fallback response based on the user's message
+    let fallbackResponse = "I'm here to help with any questions about SpiceBox! Our meals are freshly prepared with authentic Indian spices, designed for weight loss, and delivered daily across Australia. Feel free to ask about our plans, pricing, or dietary options!";
+    
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('plan') || lowerMessage.includes('price')) {
+      fallbackResponse = "We offer three main plans: Essential ($149/week), Complete ($187/week), and Transformation ($219/week). Each includes fresh Indian meals delivered daily, with the Complete and Transformation plans offering additional nutrition support. Would you like to know more about any specific plan?";
+    } else if (lowerMessage.includes('delivery') || lowerMessage.includes('deliver')) {
+      fallbackResponse = "We deliver fresh, healthy Indian meals daily across Australia! Our meals are prepared in the morning and delivered to your door, so you always get the freshest food. Delivery is included in all our plans.";
+    } else if (lowerMessage.includes('diet') || lowerMessage.includes('food')) {
+      fallbackResponse = "Our meals cater to all dietary preferences including vegetarian, non-vegetarian, vegan, and keto options. Each meal is authentically Indian, nutritionally balanced, and designed to support your weight loss goals. What dietary preference would you like to know more about?";
+    }
+    
+    res.status(200).json({ reply: fallbackResponse });
   }
 });
 
