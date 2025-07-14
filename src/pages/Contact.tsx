@@ -62,6 +62,7 @@ const Contact = () => {
       id: Date.now(),
       text: newMessage,
       isAI: false,
+      timestamp: new Date(),
     };
 
     const currentMessage = newMessage;
@@ -483,10 +484,10 @@ const Contact = () => {
                       <p
                         className={`text-xs mt-1 ${message.isAI ? "text-gray-500" : "text-orange-100"}`}
                       >
-                        {message.timestamp.toLocaleTimeString([], {
+                        {message.timestamp?.toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
-                        })}
+                        }) || ""}
                       </p>
                     </div>
                   </div>
