@@ -251,7 +251,7 @@ const Plan = () => {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.2 }}
-                className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
+                className={`relative flex flex-col h-full bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
                   plan.recommended
                     ? "border-orange-500 scale-105"
                     : "border-gray-200"
@@ -265,7 +265,7 @@ const Plan = () => {
                   </div>
                 )}
 
-                <div className="p-8">
+                <div className="p-8 flex flex-col flex-1">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
                     {plan.name}
                   </h3>
@@ -308,7 +308,8 @@ const Plan = () => {
                     </div>
                   </div>
 
-                  <ul className="space-y-3 mb-8">
+                  {/* Features list gets flex-1 to push button down */}
+                  <ul className="space-y-3 mb-8 flex-1">
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start">
                         <svg
@@ -327,16 +328,19 @@ const Plan = () => {
                     ))}
                   </ul>
 
-                  <Link
-                    to="/enter-details"
-                    className={`w-full block text-center py-4 px-6 rounded-lg font-bold text-lg transition-all duration-200 ${
-                      plan.recommended
-                        ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
-                        : "bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700 border-2 border-gray-200 hover:border-orange-300"
-                    }`}
-                  >
-                    Get Started
-                  </Link>
+                  {/* The button is OUTSIDE the flex-1 block, always bottom-aligned */}
+                  <div className="mt-auto">
+                    <Link
+                      to="/enter-details"
+                      className={`w-full block text-center py-4 px-6 rounded-lg font-bold text-lg transition-all duration-200 ${
+                        plan.recommended
+                          ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
+                          : "bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700 border-2 border-gray-200 hover:border-orange-300"
+                      }`}
+                    >
+                      Get Started
+                    </Link>
+                  </div>
                 </div>
               </motion.div>
             ))}

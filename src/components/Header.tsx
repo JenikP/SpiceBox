@@ -11,12 +11,16 @@ const Header = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
     };
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
     });
 
@@ -26,7 +30,7 @@ const Header = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    navigate('/');
+    navigate("/");
   };
 
   const navItems = [
@@ -123,9 +127,6 @@ const Header = () => {
           <div className="hidden lg:flex items-center space-x-4">
             {user ? (
               <>
-                <span className="text-sm text-gray-600">
-                  Welcome, {user.email?.split('@')[0]}
-                </span>
                 <button
                   onClick={handleSignOut}
                   className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full font-medium hover:bg-gray-300 transition-all duration-300"
@@ -169,9 +170,6 @@ const Header = () => {
               ))}
               {user ? (
                 <div className="mx-4 mt-4 space-y-2">
-                  <div className="text-sm text-gray-600 text-center">
-                    Welcome, {user.email?.split('@')[0]}
-                  </div>
                   <button
                     onClick={() => {
                       handleSignOut();

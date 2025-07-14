@@ -73,85 +73,104 @@ app.post("/api/chat", async (req, res) => {
   const { message, context } = req.body;
 
   if (!message) {
-    return res.status(400).json({ error: 'Message is required' });
+    return res.status(400).json({ error: "Message is required" });
   }
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyD00i2hvT5WBeMs8QNLFbWfgDhg5S21MD4';
-    console.log('Using Gemini API key:', apiKey.substring(0, 10) + '...');
-    
-    const systemPrompt = context || 'You are a helpful assistant for SpiceBox, a healthy Indian meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly, informative, and under 150 words. Focus on our authentic Indian cuisine designed for weight loss, flexible subscription plans, fresh daily delivery across Australia, and personalized meal options for vegetarian, non-vegetarian, vegan, and keto diets.';
-    
-    console.log('Sending message to Gemini:', message);
+    const apiKey =
+      process.env.GEMINI_API_KEY || "AIzaSyCcCwYJO7hSbdkDqj2g0mMOZPL5jv2H-o8";
+    console.log("Using Gemini API key:", apiKey.substring(0, 10) + "...");
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `${systemPrompt}\n\nUser question: ${message}\n\nPlease provide a helpful response about SpiceBox:`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 150,
+    const systemPrompt =
+      context ||
+      "You are a helpful assistant for SpiceBox, a healthy Indian meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly, informative, and under 150 words. Focus on our authentic Indian cuisine designed for weight loss, flexible subscription plans, fresh daily delivery across Australia, and personalized meal options for vegetarian, non-vegetarian, vegan, and keto diets.";
+
+    console.log("Sending message to Gemini:", message);
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `${systemPrompt}\n\nUser question: ${message}\n\nPlease provide a helpful response about SpiceBox:`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 150,
           },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
-      }),
-    });
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+              category: "HARM_CATEGORY_HATE_SPEECH",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE",
+            },
+          ],
+        }),
+      },
+    );
 
-    console.log('Gemini API response status:', response.status);
+    console.log("Gemini API response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error response:', errorText);
+      console.error("Gemini API error response:", errorText);
       throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Gemini API response data:', JSON.stringify(data, null, 2));
-    
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'I apologize, but I could not generate a response. Please try asking about our meal plans, pricing, or how SpiceBox can help you with your health goals!';
+    console.log("Gemini API response data:", JSON.stringify(data, null, 2));
 
-    console.log('Sending reply:', reply);
+    const reply =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "I apologize, but I could not generate a response. Please try asking about our meal plans, pricing, or how SpiceBox can help you with your health goals!";
+
+    console.log("Sending reply:", reply);
     res.status(200).json({ reply });
   } catch (error) {
-    console.error('Gemini API error:', error);
-    
+    console.error("Gemini API error:", error);
+
     // Provide a more helpful fallback response based on the user's message
-    let fallbackResponse = "I'm here to help with any questions about SpiceBox! Our meals are freshly prepared with authentic Indian spices, designed for weight loss, and delivered daily across Australia. Feel free to ask about our plans, pricing, or dietary options!";
-    
+    let fallbackResponse =
+      "I'm here to assist with any questions you may have about SpiceBox! Please feel free to ask about our meal plans, delivery, or any other inquiries.";
+
     const lowerMessage = message.toLowerCase();
-    if (lowerMessage.includes('plan') || lowerMessage.includes('price')) {
-      fallbackResponse = "We offer three main plans: Essential ($149/week), Complete ($187/week), and Transformation ($219/week). Each includes fresh Indian meals delivered daily, with the Complete and Transformation plans offering additional nutrition support. Would you like to know more about any specific plan?";
-    } else if (lowerMessage.includes('delivery') || lowerMessage.includes('deliver')) {
-      fallbackResponse = "We deliver fresh, healthy Indian meals daily across Australia! Our meals are prepared in the morning and delivered to your door, so you always get the freshest food. Delivery is included in all our plans.";
-    } else if (lowerMessage.includes('diet') || lowerMessage.includes('food')) {
-      fallbackResponse = "Our meals cater to all dietary preferences including vegetarian, non-vegetarian, vegan, and keto options. Each meal is authentically Indian, nutritionally balanced, and designed to support your weight loss goals. What dietary preference would you like to know more about?";
+    if (lowerMessage.includes("plan") || lowerMessage.includes("price")) {
+      fallbackResponse =
+        "We offer three main plans: Essential ($149/week), Complete ($187/week), and Transformation ($219/week). Each includes fresh Indian meals delivered daily, with the Complete and Transformation plans offering additional nutrition support. Would you like to know more about any specific plan?";
+    } else if (
+      lowerMessage.includes("delivery") ||
+      lowerMessage.includes("deliver")
+    ) {
+      fallbackResponse =
+        "We deliver fresh, healthy Indian meals daily across Australia! Our meals are prepared in the morning and delivered to your door, so you always get the freshest food. Delivery is included in all our plans.";
+    } else if (lowerMessage.includes("diet") || lowerMessage.includes("food")) {
+      fallbackResponse =
+        "Our meals cater to all dietary preferences including vegetarian, non-vegetarian, vegan, and keto options. Each meal is authentically Indian, nutritionally balanced, and designed to support your weight loss goals. What dietary preference would you like to know more about?";
     }
-    
+
     res.status(200).json({ reply: fallbackResponse });
   }
 });
@@ -241,39 +260,39 @@ app.post(
 
       // Save order to Supabase
       try {
-        const { createClient } = await import('@supabase/supabase-js');
+        const { createClient } = await import("@supabase/supabase-js");
         const supabase = createClient(
-          process.env.VITE_SUPABASE_URL || 'https://hwwrzlxgnhsawxaswqjm.supabase.co',
-          process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3d3J6bHhnbmhzYXd4YXN3cWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3ODI4ODQsImV4cCI6MjA2NzM1ODg4NH0.i9zCJFHoI_wR2VBZGNXwdHKPSmYG0tY6oexKN64c5cw'
+          process.env.VITE_SUPABASE_URL ||
+            "https://hwwrzlxgnhsawxaswqjm.supabase.co",
+          process.env.VITE_SUPABASE_ANON_KEY ||
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3d3J6bHhnbmhzYXd4YXN3cWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3ODI4ODQsImV4cCI6MjA2NzM1ODg4NH0.i9zCJFHoI_wR2VBZGNXwdHKPSmYG0tY6oexKN64c5cw",
         );
 
         const orderData = {
           user_id: session.metadata?.userId || null,
           order_number: `SPB-${Date.now()}`,
           stripe_session_id: session.id,
-          status: 'confirmed',
+          status: "confirmed",
           total_amount: session.amount_total / 100, // Convert cents to dollars
           currency: session.currency.toUpperCase(),
-          plan_name: session.metadata?.planName || 'Unknown Plan',
+          plan_name: session.metadata?.planName || "Unknown Plan",
           plan_id: session.metadata?.planId || null,
           plan_duration: session.metadata?.planDuration || null,
-          billing_cycle: session.metadata?.billingCycle || 'one-time',
-          meal_count: parseInt(session.metadata?.mealCount || '0'),
+          billing_cycle: session.metadata?.billingCycle || "one-time",
+          meal_count: parseInt(session.metadata?.mealCount || "0"),
           customer_email: session.customer_email,
-          special_instructions: session.metadata?.specialInstructions || null
+          special_instructions: session.metadata?.specialInstructions || null,
         };
 
-        const { error } = await supabase
-          .from('orders')
-          .insert([orderData]);
+        const { error } = await supabase.from("orders").insert([orderData]);
 
         if (error) {
-          console.error('Error saving order to database:', error);
+          console.error("Error saving order to database:", error);
         } else {
-          console.log('Order saved successfully:', orderData.order_number);
+          console.log("Order saved successfully:", orderData.order_number);
         }
       } catch (dbError) {
-        console.error('Database connection error:', dbError);
+        console.error("Database connection error:", dbError);
       }
     }
 

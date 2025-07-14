@@ -1,0 +1,160 @@
+Using Gemini API key: AIzaSyD00i...
+Sending message to Gemini: hi
+Gemini API response status: 404
+Gemini API error response: {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+Gemini API error: Error: Gemini API error: 404 - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+    at file:///home/runner/workspace/server.js:130:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+API call: POST /api/chat
+Using Gemini API key: AIzaSyD00i...
+Sending message to Gemini: im sorry
+Gemini API response status: 404
+Gemini API error response: {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+Gemini API error: Error: Gemini API error: 404 - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+    at file:///home/runner/workspace/server.js:130:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+API call: GET /
+API call: GET /assets/index-BGwpOjSC.js
+API call: GET /assets/index-HWrCk3ZH.css
+API call: GET /logo.png
+API call: GET /homepage.png
+API call: GET /facebook.png
+API call: GET /instagram.png
+API call: POST /api/chat
+Using Gemini API key: AIzaSyD00i...
+Sending message to Gemini: What plans do you have?
+Gemini API response status: 404
+Gemini API error response: {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+Gemini API error: Error: Gemini API error: 404 - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+    at file:///home/runner/workspace/server.js:130:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+API call: POST /api/chat
+Using Gemini API key: AIzaSyD00i...
+Sending message to Gemini: Tell me about your meals?"
+Gemini API response status: 404
+Gemini API error response: {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+Gemini API error: Error: Gemini API error: 404 - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+    at file:///home/runner/workspace/server.js:130:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+API call: POST /api/chat
+Using Gemini API key: AIzaSyD00i...
+Sending message to Gemini: How does the delivery work?
+Gemini API response status: 404
+Gemini API error response: {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+Gemini API error: Error: Gemini API error: 404 - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+    at file:///home/runner/workspace/server.js:130:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+API call: POST /api/chat
+Using Gemini API key: AIzaSyD00i...
+Sending message to Gemini: Can I personalize my plan?
+Gemini API response status: 404
+Gemini API error response: {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+Gemini API error: Error: Gemini API error: 404 - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+    at file:///home/runner/workspace/server.js:130:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+API call: POST /api/chat
+Using Gemini API key: AIzaSyD00i...
+Sending message to Gemini: i want to lose 10Kg what should i do
+Gemini API response status: 404
+Gemini API error response: {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+Gemini API error: Error: Gemini API error: 404 - {
+  "error": {
+    "code": 404,
+    "message": "models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+    at file:///home/runner/workspace/server.js:130:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)

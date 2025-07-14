@@ -27,9 +27,10 @@ const Pricing = () => {
         user_id: user.id,
         plan_id: selectedPlan.id,
         plan_name: selectedPlan.name,
-        plan_price: billingCycle === "weekly" 
-          ? (selectedPlan.weeklyPrice || selectedPlan.weeklyprice || 0)
-          : (selectedPlan.monthlyPrice || selectedPlan.monthlyprice || 0),
+        plan_price:
+          billingCycle === "weekly"
+            ? selectedPlan.weeklyPrice || selectedPlan.weeklyprice || 0
+            : selectedPlan.monthlyPrice || selectedPlan.monthlyprice || 0,
         billing_cycle: billingCycle,
         updated_at: new Date().toISOString(),
       };
@@ -348,33 +349,41 @@ const Pricing = () => {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.2 }}
-                className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
-                  plan.recommended
-                    ? "border-orange-500 scale-105"
-                    : "border-gray-200"
-                }`}
+                className={`
+                  relative flex flex-col h-full bg-white rounded-2xl shadow-lg border-2 
+                  transition-all duration-300 hover:shadow-xl
+                  ${plan.recommended ? "border-orange-500 scale-105" : "border-gray-200"}
+                `}
               >
+                {/* BADGE */}
                 {plan.badge && (
                   <div
-                    className={`${plan.badgeColor} text-white px-4 py-2 rounded-full text-sm font-medium absolute -top-3 left-1/2 transform -translate-x-1/2`}
+                    className={`
+                      ${plan.badgeColor} text-white px-4 py-2 rounded-full text-sm font-medium
+                      absolute left-1/2 -top-5 z-10 transform -translate-x-1/2 shadow-lg
+                    `}
+                    style={{ minWidth: 110, textAlign: "center" }}
                   >
                     {plan.badge}
                   </div>
                 )}
 
-                <div className="p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                {/* CARD CONTENT */}
+                <div className="flex flex-col flex-1 p-8 pt-10">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">
                     {plan.name}
                   </h3>
-                  <p className="text-gray-600 mb-6">{plan.description}</p>
-
-                  <div className="mb-6">
-                    <div className="flex items-baseline">
+                  <p className="text-gray-600 mb-6 text-center">
+                    {plan.description}
+                  </p>
+                  {/* PRICING */}
+                  <div className="mb-6 text-center">
+                    <div className="flex items-baseline justify-center">
                       <span className="text-4xl font-bold text-gray-900">
                         $
                         {billingCycle === "weekly"
-                          ? (plan.weeklyPrice || plan.weeklyprice || 0)
-                          : (plan.monthlyPrice || plan.monthlyprice || 0)}
+                          ? plan.weeklyPrice || plan.weeklyprice || 0
+                          : plan.monthlyPrice || plan.monthlyprice || 0}
                       </span>
                       <span className="text-lg text-gray-500 ml-2">
                         /{billingCycle === "weekly" ? "week" : "month"}
@@ -384,19 +393,28 @@ const Pricing = () => {
                       <span className="line-through">
                         $
                         {billingCycle === "weekly"
-                          ? (plan.originalWeeklyPrice || plan.originalweeklyprice || 0)
-                          : (plan.originalMonthlyPrice || plan.originalmonthlyprice || 0)}
+                          ? plan.originalWeeklyPrice ||
+                            plan.originalweeklyprice ||
+                            0
+                          : plan.originalMonthlyPrice ||
+                            plan.originalmonthlyprice ||
+                            0}
                       </span>
                       <span className="text-green-600 ml-2 font-medium">
                         Save $
                         {billingCycle === "weekly"
-                          ? (plan.originalWeeklyPrice || plan.originalweeklyprice || 0) - (plan.weeklyPrice || plan.weeklyprice || 0)
-                          : (plan.originalMonthlyPrice || plan.originalmonthlyprice || 0) - (plan.monthlyPrice || plan.monthlyprice || 0)}
+                          ? (plan.originalWeeklyPrice ||
+                              plan.originalweeklyprice ||
+                              0) - (plan.weeklyPrice || plan.weeklyprice || 0)
+                          : (plan.originalMonthlyPrice ||
+                              plan.originalmonthlyprice ||
+                              0) -
+                            (plan.monthlyPrice || plan.monthlyprice || 0)}
                       </span>
                     </div>
                   </div>
-
-                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  {/* PLAN PRICE */}
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg text-center">
                     <div className="text-sm text-gray-600">
                       <span className="font-medium">Total Plan Price: </span>
                       <span className="text-lg font-bold text-gray-900">
@@ -404,36 +422,40 @@ const Pricing = () => {
                       </span>
                     </div>
                   </div>
-
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start">
-                        <svg
-                          className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="text-gray-700">{feature}</span>
-                      </li>
-                    ))}
+                  {/* FEATURES */}
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {plan.features.map(
+                      (feature: string, featureIndex: number) => (
+                        <li key={featureIndex} className="flex items-start">
+                          <svg
+                            className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span className="text-gray-700">{feature}</span>
+                        </li>
+                      ),
+                    )}
                   </ul>
-
-                  <button
-                    onClick={() => handlePlanSelection(plan)}
-                    className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all duration-200 ${
-                      plan.recommended
-                        ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
-                        : "bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700 border-2 border-gray-200 hover:border-orange-300"
-                    }`}
-                  >
-                    Get Started
-                  </button>
+                  {/* BUTTON */}
+                  <div className="mt-auto">
+                    <button
+                      onClick={() => handlePlanSelection(plan)}
+                      className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all duration-200 ${
+                        plan.recommended
+                          ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
+                          : "bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700 border-2 border-gray-200 hover:border-orange-300"
+                      }`}
+                    >
+                      Get Started
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}

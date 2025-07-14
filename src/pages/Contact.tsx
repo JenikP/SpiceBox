@@ -8,7 +8,7 @@ const Contact = () => {
     email: "",
     phone: "",
     subject: "",
-    message: ""
+    message: "",
   });
 
   // Chat functionality
@@ -18,8 +18,8 @@ const Contact = () => {
       id: 1,
       text: "Hi! I'm your SpiceBox AI assistant. How can I help you today? 🌶️",
       isAI: true,
-      timestamp: new Date()
-    }
+      timestamp: new Date(),
+    },
   ]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -31,102 +31,72 @@ const Contact = () => {
   }, [chatMessages]);
 
   // AI response generator using Gemini API
-  const generateAIResponse = async (userMessage: string): Promise<string> => {
+  const generateAIResponse = async (userMessage) => {
     try {
-      console.log('Sending chat request:', userMessage);
-      
-      const response = await fetch('/api/chat', {
-        method: 'POST',
+      const response = await fetch("/api/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: userMessage,
-          context: 'You are a helpful assistant for SpiceBox, a healthy Indian meal delivery service. Answer questions about meal plans, nutrition, diet preferences, and general health. Keep responses friendly, informative, and under 150 words. Focus on our authentic Indian cuisine designed for weight loss, flexible subscription plans, fresh daily delivery across Australia, and personalized meal options for vegetarian, non-vegetarian, vegan, and keto diets.'
+          context:
+            "You are a helpful assistant for SpiceBox, a healthy Indian meal delivery service.",
         }),
       });
-
-      console.log('Chat API response status:', response.status);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Chat API error:', errorText);
-        throw new Error(`API error: ${response.status} - ${errorText}`);
+        throw new Error("Network response was not ok");
       }
-
-      const data = await response.json();
-      console.log('Chat API response data:', data);
-      
-      if (data.reply) {
-        return data.reply;
-      } else {
-        throw new Error('No reply received from API');
-      }
+      const { reply } = await response.json();
+      return reply || "I couldn't understand that.";
     } catch (error) {
-      console.error('Error calling AI API:', error);
-      
-      // Provide contextual fallback responses based on user message
-      const lowerMessage = userMessage.toLowerCase();
-      
-      if (lowerMessage.includes('plan') || lowerMessage.includes('price') || lowerMessage.includes('cost')) {
-        return "We offer three main plans: Essential ($149/week), Complete ($187/week), and Transformation ($219/week). Each includes fresh Indian meals delivered daily. The Complete plan adds nutrition consultations, and Transformation includes personal training. Which plan interests you most?";
-      } else if (lowerMessage.includes('delivery') || lowerMessage.includes('deliver')) {
-        return "We deliver fresh, healthy Indian meals daily across Australia! Our meals are prepared fresh each morning in our commercial kitchen and delivered within hours. Delivery is included in all our meal plans. What area are you located in?";
-      } else if (lowerMessage.includes('diet') || lowerMessage.includes('vegetarian') || lowerMessage.includes('vegan') || lowerMessage.includes('keto')) {
-        return "We cater to all dietary preferences! Our menu includes vegetarian, non-vegetarian, vegan, and keto options. All meals are authentically Indian and nutritionally balanced for weight loss. During sign-up, you can specify your preferences and any allergies. What dietary requirements do you have?";
-      } else if (lowerMessage.includes('weight') || lowerMessage.includes('lose') || lowerMessage.includes('loss')) {
-        return "Our meals are specifically designed for sustainable weight loss using authentic Indian spices and fresh ingredients. We focus on portion control, balanced nutrition, and metabolism-boosting spices. Many customers lose 2-4kg per month. What are your weight loss goals?";
-      } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-        return "Hello! I'm here to help you learn about SpiceBox. We're Australia's premier healthy Indian meal delivery service. You can ask me about our meal plans, pricing, delivery areas, dietary options, or how our program works. What would you like to know?";
-      } else {
-        return "I'm here to help with any questions about SpiceBox! Our meals are freshly prepared with authentic Indian spices, designed for weight loss, and delivered daily across Australia. You can ask me about our plans ($149-219/week), dietary options (veg, non-veg, vegan, keto), delivery, or how we help with weight loss. What interests you most?";
-      }
+      console.error("Error in chat response:", error);
+      return "An error occurred while processing your request.";
     }
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (newMessage.trim() === "") return;
 
     const userMessage = {
       id: Date.now(),
       text: newMessage,
       isAI: false,
-      timestamp: new Date()
     };
 
     const currentMessage = newMessage;
-    setChatMessages(prev => [...prev, userMessage]);
+    setChatMessages((prev) => [...prev, userMessage]);
     setNewMessage("");
     setIsTyping(true);
 
     try {
       // Get AI response
       const aiResponseText = await generateAIResponse(currentMessage);
-      
+
       const aiResponse = {
         id: Date.now() + 1,
         text: aiResponseText,
         isAI: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      setChatMessages(prev => [...prev, aiResponse]);
+      setChatMessages((prev) => [...prev, aiResponse]);
     } catch (error) {
-      console.error('Error getting AI response:', error);
+      console.error("Error getting AI response:", error);
       const errorResponse = {
         id: Date.now() + 1,
         text: "I'm sorry, I'm having trouble responding right now. Please try again or contact our support team directly.",
         isAI: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      setChatMessages(prev => [...prev, errorResponse]);
+      setChatMessages((prev) => [...prev, errorResponse]);
     } finally {
       setIsTyping(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -138,10 +108,14 @@ const Contact = () => {
     console.log("Form submitted:", formData);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -151,41 +125,45 @@ const Contact = () => {
       title: "Phone Support",
       description: "Speak with our customer service team",
       contact: "1800 SPICEBOX",
-      hours: "Mon-Fri 9AM-6PM AEST"
+      hours: "Mon-Fri 9AM-6PM AEST",
     },
     {
       icon: "✉️",
       title: "Email Support",
       description: "Send us your questions or feedback",
       contact: "hello@spicebox.com.au",
-      hours: "We reply within 24 hours"
+      hours: "We reply within 24 hours",
     },
     {
       icon: "💬",
       title: "Live Chat",
       description: "Get instant help from our team",
       contact: "Chat widget (bottom right)",
-      hours: "Mon-Fri 9AM-6PM AEST"
-    }
+      hours: "Mon-Fri 9AM-6PM AEST",
+    },
   ];
 
   const faqs = [
     {
       question: "How does the meal delivery work?",
-      answer: "We deliver fresh, pre-prepared meals to your door every morning. Simply heat and enjoy authentic Indian flavors designed for your weight loss goals."
+      answer:
+        "We deliver fresh, pre-prepared meals to your door every morning. Simply heat and enjoy authentic Indian flavors designed for your weight loss goals.",
     },
     {
       question: "Can I customize my meal plan?",
-      answer: "Yes! During onboarding, you'll specify dietary preferences (vegetarian, non-vegetarian, vegan, keto, etc.) and any allergies. We'll tailor your meals accordingly."
+      answer:
+        "Yes! During onboarding, you'll specify dietary preferences (vegetarian, non-vegetarian, vegan, keto, etc.) and any allergies. We'll tailor your meals accordingly.",
     },
     {
       question: "What if I don't lose weight?",
-      answer: "We offer a weight loss guarantee. If you follow the plan and don't see results, we'll work with you to adjust your meals or provide a refund."
+      answer:
+        "We offer a weight loss guarantee. If you follow the plan and don't see results, we'll work with you to adjust your meals or provide a refund.",
     },
     {
       question: "How fresh are the meals?",
-      answer: "All meals are prepared fresh daily in our commercial kitchen using traditional Indian cooking methods and delivered within hours of preparation."
-    }
+      answer:
+        "All meals are prepared fresh daily in our commercial kitchen using traditional Indian cooking methods and delivered within hours of preparation.",
+    },
   ];
 
   return (
@@ -205,8 +183,9 @@ const Contact = () => {
               </span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Have questions about our meal plans? Need help with your order? 
-              Our friendly customer service team is here to help you succeed on your health journey.
+              Have questions about our meal plans? Need help with your order?
+              Our friendly customer service team is here to help you succeed on
+              your health journey.
             </p>
           </motion.div>
         </div>
@@ -225,9 +204,13 @@ const Contact = () => {
                 className="text-center bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="text-5xl mb-4">{method.icon}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{method.title}</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {method.title}
+                </h3>
                 <p className="text-gray-600 mb-4">{method.description}</p>
-                <div className="font-semibold text-orange-600 mb-2">{method.contact}</div>
+                <div className="font-semibold text-orange-600 mb-2">
+                  {method.contact}
+                </div>
                 <div className="text-sm text-gray-500">{method.hours}</div>
               </motion.div>
             ))}
@@ -247,7 +230,8 @@ const Contact = () => {
               Send Us a Message
             </h2>
             <p className="text-xl text-gray-600">
-              We'd love to hear from you. Fill out the form below and we'll get back to you as soon as possible.
+              We'd love to hear from you. Fill out the form below and we'll get
+              back to you as soon as possible.
             </p>
           </motion.div>
 
@@ -260,7 +244,10 @@ const Contact = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Full Name *
                   </label>
                   <input
@@ -275,7 +262,10 @@ const Contact = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Email Address *
                   </label>
                   <input
@@ -293,7 +283,10 @@ const Contact = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="phone"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Phone Number
                   </label>
                   <input
@@ -307,7 +300,10 @@ const Contact = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="subject"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Subject *
                   </label>
                   <select
@@ -329,7 +325,10 @@ const Contact = () => {
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="message"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Message *
                 </label>
                 <textarea
@@ -380,7 +379,9 @@ const Contact = () => {
                 transition={{ delay: index * 0.1 }}
                 className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 hover:shadow-md transition-shadow duration-300"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  {faq.question}
+                </h3>
                 <p className="text-gray-600">{faq.answer}</p>
               </motion.div>
             ))}
@@ -434,7 +435,9 @@ const Contact = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                      <span className="text-orange-500 font-bold text-sm">AI</span>
+                      <span className="text-orange-500 font-bold text-sm">
+                        AI
+                      </span>
                     </div>
                     <div>
                       <h3 className="font-semibold">SpiceBox Assistant</h3>
@@ -445,8 +448,18 @@ const Contact = () => {
                     onClick={() => setIsChatOpen(false)}
                     className="text-white hover:text-orange-200 transition-colors"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -457,18 +470,23 @@ const Contact = () => {
                 {chatMessages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.isAI ? 'justify-start' : 'justify-end'}`}
+                    className={`flex ${message.isAI ? "justify-start" : "justify-end"}`}
                   >
                     <div
                       className={`max-w-xs p-3 rounded-2xl ${
                         message.isAI
-                          ? 'bg-gray-100 text-gray-800'
-                          : 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                          ? "bg-gray-100 text-gray-800"
+                          : "bg-gradient-to-r from-orange-500 to-red-500 text-white"
                       }`}
                     >
                       <p className="text-sm">{message.text}</p>
-                      <p className={`text-xs mt-1 ${message.isAI ? 'text-gray-500' : 'text-orange-100'}`}>
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <p
+                        className={`text-xs mt-1 ${message.isAI ? "text-gray-500" : "text-orange-100"}`}
+                      >
+                        {message.timestamp.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                     </div>
                   </div>
@@ -479,8 +497,14 @@ const Contact = () => {
                     <div className="bg-gray-100 p-3 rounded-2xl">
                       <div className="flex space-x-1">
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.1s" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -505,8 +529,18 @@ const Contact = () => {
                     disabled={!newMessage.trim() || isTyping}
                     className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-2 rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -519,9 +553,9 @@ const Contact = () => {
         <motion.button
           onClick={() => setIsChatOpen(!isChatOpen)}
           className={`w-14 h-14 ${
-            isChatOpen 
-              ? 'bg-gray-600 hover:bg-gray-700' 
-              : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+            isChatOpen
+              ? "bg-gray-600 hover:bg-gray-700"
+              : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
           } text-white rounded-full shadow-lg transition-all duration-300 flex items-center justify-center group`}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -538,7 +572,12 @@ const Contact = () => {
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </motion.svg>
             ) : (
               <motion.svg
@@ -551,7 +590,12 @@ const Contact = () => {
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
               </motion.svg>
             )}
           </AnimatePresence>

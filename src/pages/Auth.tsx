@@ -34,16 +34,18 @@ const Auth = () => {
           alert("Invalid email or password");
         } else {
           // Check if user has already completed details
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const {
+            data: { user: authUser },
+          } = await supabase.auth.getUser();
           if (authUser) {
             const { data: userDetails } = await supabase
               .from("user_details")
               .select("id")
               .eq("user_id", authUser.id)
               .single();
-            
+
             if (userDetails) {
-              navigate("/personalized-plan");
+              navigate("/enter-details");
             } else {
               navigate("/enter-details");
             }
@@ -109,8 +111,18 @@ const Auth = () => {
             className="absolute top-2 right-3 cursor-pointer text-white hover:text-gray-200 transition-colors"
             onClick={() => navigate("/")}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
 
@@ -119,7 +131,9 @@ const Auth = () => {
               {isLogin ? "Welcome Back" : "Join SpiceBox"}
             </h2>
             <p className="text-orange-100">
-              {isLogin ? "Continue your healthy journey" : "Start your healthy journey today"}
+              {isLogin
+                ? "Continue your healthy journey"
+                : "Start your healthy journey today"}
             </p>
           </div>
 
@@ -130,7 +144,9 @@ const Auth = () => {
                   type="text"
                   placeholder="Full Name"
                   value={formData.fullName}
-                  onChange={(e) => handleInputChange("fullName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("fullName", e.target.value)
+                  }
                   className="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg placeholder-white placeholder-opacity-70 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                   required
                 />
@@ -201,7 +217,9 @@ const Auth = () => {
               onClick={() => setIsLogin(!isLogin)}
               className="text-white hover:text-orange-200 transition-colors underline"
             >
-              {isLogin ? "Need an account? Sign Up" : "Already have an account? Sign In"}
+              {isLogin
+                ? "Need an account? Sign Up"
+                : "Already have an account? Sign In"}
             </button>
           </div>
 
@@ -221,7 +239,9 @@ const Auth = () => {
               <div className="w-full border-t border-white border-opacity-30"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-gradient-to-br from-orange-500 to-red-500 px-2 text-white">Or</span>
+              <span className="bg-gradient-to-br from-orange-500 to-red-500 px-2 text-white">
+                Or
+              </span>
             </div>
           </div>
 
