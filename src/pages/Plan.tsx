@@ -116,23 +116,23 @@ const Plan = () => {
     {
       name: "Priya S.",
       location: "Melbourne",
-      plan: "Complete Plan",
+      plan: "Full Journey Plan",
       quote:
         "Lost 8kg in 3 months while eating the most delicious Indian food. The convenience is unmatched!",
       rating: 5,
     },
     {
       name: "Rahul M.",
-      location: "Sydney",
-      plan: "Transformation Plan",
+      location: "Melbourne",
+      plan: "Monthly Plan",
       quote:
         "The nutritionist consultations were game-changing. Finally found a sustainable way to eat healthy.",
       rating: 5,
     },
     {
       name: "Anjali K.",
-      location: "Brisbane",
-      plan: "Essential Plan",
+      location: "Melbourne",
+      plan: "14 Day Kickstart Plan",
       quote:
         "Perfect for my busy lifestyle. Authentic flavors without the guilt or cooking time.",
       rating: 5,

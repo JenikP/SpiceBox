@@ -62,7 +62,7 @@ const Home = () => {
     {
       name: "Abdul",
       location: "Melbourne",
-      date: "Mayy 2025",
+      date: "May 2025",
       text: "SpiceFit changed my relationship with food. Healthy Indian meals that actually taste amazing.",
       rating: 4.5,
     },
@@ -401,7 +401,7 @@ const Home = () => {
                       />
                     </svg>
                   )}
-                  <div style={{ marginLeft: 'auto' }}>
+                  <div style={{ marginLeft: "auto" }}>
                     <span className="text-gray-500 text-sm">
                       {testimonial.date}
                     </span>

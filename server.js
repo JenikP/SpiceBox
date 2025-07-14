@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY ||
-    "***REMOVED***51RfckJE6vfmHs239tTjsBILgAAg5ubIDm1lzGzwendUxW5MbRO8l3VJprWhFwebqfIQQ8Q9LNm3sOZHX8u3eWiM3006O1uHom1",
+    "***REMOVED***",
 );
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
