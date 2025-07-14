@@ -4,10 +4,7 @@ import Stripe from "stripe";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY ||
-    "***REMOVED***",
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -77,8 +74,7 @@ app.post("/api/chat", async (req, res) => {
   }
 
   try {
-    const apiKey =
-      process.env.GEMINI_API_KEY || "AIzaSyCcCwYJO7hSbdkDqj2g0mMOZPL5jv2H-o8";
+    const apiKey = process.env.GEMINI_API_KEY;
     console.log("Using Gemini API key:", apiKey.substring(0, 10) + "...");
 
     const systemPrompt =
@@ -262,10 +258,8 @@ app.post(
       try {
         const { createClient } = await import("@supabase/supabase-js");
         const supabase = createClient(
-          process.env.VITE_SUPABASE_URL ||
-            "https://hwwrzlxgnhsawxaswqjm.supabase.co",
-          process.env.VITE_SUPABASE_ANON_KEY ||
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3d3J6bHhnbmhzYXd4YXN3cWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3ODI4ODQsImV4cCI6MjA2NzM1ODg4NH0.i9zCJFHoI_wR2VBZGNXwdHKPSmYG0tY6oexKN64c5cw",
+          process.env.VITE_SUPABASE_URL,
+          process.env.VITE_SUPABASE_ANON_KEY,
         );
 
         const orderData = {

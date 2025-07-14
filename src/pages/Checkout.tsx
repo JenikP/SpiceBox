@@ -16,10 +16,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 
 // Always use VITE_STRIPE_PUBLISHABLE_KEY
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
-    "***REMOVED***",
-);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 // Validation schema for email and special instructions
 const checkoutSchema = z.object({
